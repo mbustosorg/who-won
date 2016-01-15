@@ -29,7 +29,6 @@ import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.annotations._
 import com.wordnik.swagger.model.ApiInfo
 import org.bustos.whowon.WhoWonData._
-import org.bustos.whowon.WhoWonTables.{Rider}
 import org.slf4j.LoggerFactory
 import spray.http.DateTime
 import spray.http.{DateTime, HttpCookie}
@@ -64,7 +63,7 @@ class WhoWonServiceActor extends HttpServiceActor with ActorLogging {
     override def baseUrl = "/"
     override def docsPath = "api-docs"
     override def actorRefFactory = context
-    override def apiInfo = Some(new ApiInfo("WhoWon Rider Tracking API",
+    override def apiInfo = Some(new ApiInfo("WhoWon Bet Trackig API",
       "API for interacting with the WhoWon Server.", "", "", "", ""))
   }
 }
@@ -81,18 +80,14 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   import system.dispatcher
 
   val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
+
   val routes = testRoute ~
-    nameForRider ~
-    deleteRider ~
-    addRider ~
-    updateRider ~
-    observeRider ~
-    riderEvents ~
-    riderStatus ~
-    restStopCounts ~
-    login ~
+    postBet ~
+    bets ~
+    postGameResult ~
+    getGameResults ~
     reports ~
-    admin
+    login
 
   val authenticationRejection = RejectionHandler {
     case AuthenticationRejection(message) :: _ => complete(400, message)
@@ -141,121 +136,50 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
       }
     }
 
-  @Path("rider/{bibNumber}")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Name for rider")
+  @Path("bets/{player}")
+  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a bet for player")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number")
+    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID")
   ))
   @ApiResponses(Array())
-  def nameForRider = get {
-    pathPrefix("rider" / IntNumber) { (bibNumber) =>
-      pathEnd {
-        respondWithMediaType(`application/json`) { ctx =>
-          val future = whoWonData ? RiderRequest(bibNumber)
-          future onSuccess {
-            case Rider(number, name, datetime) => ctx.complete(Rider(number, name, datetime).toJson.toString)
-          }
+  def postBet = post {
+    pathPrefix("bets" / IntNumber) { (playerID) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
+        val future = whoWonData ? newBet
+        future onSuccess {
+          case Bet(id, playerId, bookId, spread, amount) => ctx.complete(Bet(id, playerId, bookId, spread, amount).toJson.toString)
         }
       }
     }
   }
 
-  @Path("rider/{bibNumber}")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Add a new rider")
+  @Path("bets/{player}")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Submitted bets for player")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number"),
-    new ApiImplicitParam(name = "name", required = true, dataType = "string", paramType = "form", value = "Rider's name")
-  ))
-  def addRider =
-    post {
-      path("rider" / IntNumber) { (bibNumber) =>
-        formFields('name) { (name) =>
-          respondWithMediaType(`application/json`) { ctx =>
-            val future = whoWonData ? Rider(bibNumber, name, new org.joda.time.DateTime(org.joda.time.DateTimeZone.UTC))
-            future onSuccess {
-              case Rider(number, name, datetime) => ctx.complete(Rider(number, name, datetime).toJson.toString)
-            }
-          }
-        }
-      }
-    }
-
-  @Path("rider/{bibNumber}/delete")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Delete rider")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number")
+    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID")
   ))
   @ApiResponses(Array())
-  def deleteRider = post {
-    pathPrefix("rider" / IntNumber / "delete") { (bibNumber) =>
+  def bets = get {
+    pathPrefix("bets" / IntNumber) { (playerId) =>
       respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? RiderDelete(bibNumber)
+        val future = whoWonData ? BetsRequest(playerId)
         future onSuccess {
-          case Rider(number, name, datetime) => ctx.complete(Rider(number, name, datetime).toJson.toString)
+          case Bets(list) => ctx.complete(list.toJson.toString)
         }
       }
     }
   }
 
-  @Path("rider/{bibNumber}/update")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Update a rider's bibNumber")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number"),
-    new ApiImplicitParam(name = "name", required = true, dataType = "string", paramType = "form", value = "Rider's name")
-  ))
-  def updateRider =
-    post {
-      path("rider" / IntNumber / "update") { (bibNumber) =>
-        formFields('name) { (name) =>
-          respondWithMediaType(`application/json`) { ctx =>
-            val future = whoWonData ? RiderUpdateBib(bibNumber, name)
-            future onSuccess {
-              case Rider(number, name, datetime) => ctx.complete(Rider(number, name, datetime).toJson.toString)
-            }
-          }
-        }
-      }
-    }
-
-  @Path("rider/{bibNumber}/observe")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Update position of rider")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number")
-  ))
-  def observeRider = post {
-    pathPrefix("rider" / IntNumber / "observe") { (bibNumber) =>
+  @Path("games")
+  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a game result")
+  @ApiImplicitParams(Array())
+  @ApiResponses(Array())
+  def postGameResult = post {
+    pathPrefix("games") {
       respondWithMediaType(`application/json`) { ctx =>
-        val update = ctx.request.entity.data.asString.parseJson.convertTo[RiderUpdate]
-        val future = whoWonData ? update
-        future onSuccess {
-          case RiderConfirm(rider, update) => ctx.complete(RiderConfirm(rider, update).toJson.toString)
-        }
-      }
-    }
-  }
-
-  @Path("rider/{bibNumber}/events")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "History of rider events")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bibNumber", required = true, dataType = "integer", paramType = "path", value = "Rider's bib number")
-  ))
-  def riderEvents = get {
-    pathPrefix("rider" / IntNumber / "events") { (bibNumber) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? RiderEventsRequest(bibNumber)
-        future onSuccess {
-          case RiderEventList(list) => ctx.complete(list.toJson.toString)
-        }
-      }
-    }
-  }
-
-  @Path("riderStatus")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Latest rider updates")
-  def riderStatus = get {
-    path("riderStatus") {
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? RiderUpdates
+        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
+        val future = whoWonData ? newResult
         future onSuccess {
           case x: String => ctx.complete(x)
         }
@@ -263,14 +187,21 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     }
   }
 
-  @Path("restStopCounts")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Counts of riders by rest stop")
-  def restStopCounts = get {
-    path("restStopCounts") {
+  @Path("games/{year}")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all game results for year")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
+  ))
+  @ApiResponses(Array())
+  def getGameResults = get {
+    pathPrefix("games" / IntNumber) { (year) =>
       respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? RestStopCounts
+        val future = whoWonData ? GameResultsRequest(year)
         future onSuccess {
-          case x: String => ctx.complete(x)
+          case GameResults(list) => {
+            println(list)
+            ctx.complete(list.toJson.toString)
+          }
         }
       }
     }

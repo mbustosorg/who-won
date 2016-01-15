@@ -27,14 +27,20 @@ import scala.slick.driver.MySQLDriver.simple._
 import spray.json._
 
 object WhoWonTables {
+  // Base case classes
   case class Bet(id: Int, playerId: Int, bookId: Int, spread: Float, amount: Float)
   case class Bracket(id: Int, year: Int, region: String, seed: Int, teamName: String)
   case class Player(id: Int, firstName: String, lastName: String, nickname: String)
-  case class Result(year: Int,
-                    homeTeamId: Int, homeTeamBookId: Int,
-                    visitingTeamId: Int, visitingTeamBookId: Int,
-                    homeScore: Int, visitingScore: Int,
-                    resultTimeStamp: DateTime)
+  case class GameResult(year: Int,
+                        homeTeamId: Int, homeTeamBookId: Int,
+                        visitingTeamId: Int, visitingTeamBookId: Int,
+                        homeScore: Int, visitingScore: Int,
+                        resultTimeStamp: DateTime)
+  // Utility case classes
+  case class BetsRequest(playerId: Int)
+  case class Bets(list: List[(Bet, Boolean)])
+  case class GameResultsRequest(year: Int)
+  case class GameResults(list: List[GameResult])
 
   val betsTable = TableQuery[BetsTable]
   val bracketsTable = TableQuery[BracketsTable]
@@ -61,10 +67,16 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  // Base case classes
   implicit val bet = jsonFormat5(Bet)
   implicit val bracket = jsonFormat5(Bracket)
   implicit val player = jsonFormat4(Player)
-  implicit val result = jsonFormat8(Result)
+  implicit val result = jsonFormat8(GameResult)
+  // Utility case classes
+  implicit val betsRequest = jsonFormat1(BetsRequest)
+  implicit val bets = jsonFormat1(Bets)
+  implicit val gameResultsRequest = jsonFormat1(GameResultsRequest)
+  implicit val gameResults = jsonFormat1(GameResults)
 }
 
 class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
@@ -72,7 +84,7 @@ class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
 
   def id = column[Int]("id")
   def playerId = column[Int]("playerId")
-  def bookdId = column[Int]("bookId")
+  def bookId = column[Int]("bookId")
   def spread = column[Float]("spread")
   def amount = column[Float]("amount")
 
@@ -100,7 +112,7 @@ class PlayersTable(tag: Tag) extends Table[WhoWonTables.Player](tag, "players") 
   def * = (id, firstName, lastName, nickname) <> (WhoWonTables.Player.tupled, WhoWonTables.Player.unapply)
 }
 
-class ResultsTable(tag: Tag) extends Table[WhoWonTables.Result](tag, "results") {
+class ResultsTable(tag: Tag) extends Table[WhoWonTables.GameResult](tag, "results") {
   import WhoWonTables.dateTime
 
   def year = column[Int]("year")
@@ -112,5 +124,5 @@ class ResultsTable(tag: Tag) extends Table[WhoWonTables.Result](tag, "results") 
   def visitingScore = column[Int]("visitingScore")
   def resultTimeStamp = column[DateTime]("resultTimeStamp")
 
-  def * = (year, homeTeamId, homeTeamBookId, visitingTeamId, visitingTeamBookId, homeScore, visitingScore, resultTimeStamp) <> (WhoWonTables.Result.tupled, WhoWonTables.Result.unapply)
+  def * = (year, homeTeamId, homeTeamBookId, visitingTeamId, visitingTeamBookId, homeScore, visitingScore, resultTimeStamp) <> (WhoWonTables.GameResult.tupled, WhoWonTables.GameResult.unapply)
 }
