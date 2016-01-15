@@ -49,5 +49,23 @@ object WhoWon extends App {
     else IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
   }
 
+
+  def updatePlayers = {
+    import WhoWonTables._
+    import WhoWonData._
+    import scala.slick.driver.MySQLDriver.simple._
+
+    db.withSession { implicit session =>
+      playersTable.delete
+      val reader = CSVReader.open(new File("/Users/mauricio/Downloads/whoWonPlayers.csv"))
+      reader.foreach(fields => {
+        println(fields)
+        playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3))
+      })
+    }
+  }
+
+  updatePlayers
   doMain
+
 }
