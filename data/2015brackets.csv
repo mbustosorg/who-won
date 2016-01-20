@@ -1,0 +1,65 @@
+bookId,year,region,seed,teamName,gameTime
+1,2015,midwest,1,Kentucky,2015-03-01 12:00:00
+2,2015,midwest,16,Hampton,2015-03-01 12:00:00
+3,2015,midwest,8,Cincinnati,2015-03-01 12:00:00
+4,2015,midwest,9,Purdue,2015-03-01 12:00:00
+5,2015,midwest,5,West Virginia,2015-03-01 12:00:00
+6,2015,midwest,12,Buffalo,2015-03-01 12:00:00
+7,2015,midwest,4,Mayland,2015-03-01 12:00:00
+8,2015,midwest,13,Valparaiso,2015-03-01 12:00:00
+9,2015,midwest,6,Butler,2015-03-01 12:00:00
+10,2015,midwest,11,Texas,2015-03-01 12:00:00
+11,2015,midwest,3,Notre Dame,2015-03-01 12:00:00
+12,2015,midwest,14,Northeastern,2015-03-01 12:00:00
+13,2015,midwest,7,Wichita State,2015-03-01 12:00:00
+14,2015,midwest,10,Indiana,2015-03-01 12:00:00
+15,2015,midwest,2,Kansas,2015-03-01 12:00:00
+16,2015,midwest,15,New Mexico St.,2015-03-01 12:00:00
+17,2015,east,1,Villanova,2015-03-01 12:00:00
+18,2015,east,16,Lafayette,2015-03-01 12:00:00
+19,2015,east,8,NC State,2015-03-01 12:00:00
+20,2015,east,9,LSU,2015-03-01 12:00:00
+21,2015,east,5,UNI,2015-03-01 12:00:00
+22,2015,east,12,Wyoming,2015-03-01 12:00:00
+23,2015,east,4,Louisville,2015-03-01 12:00:00
+24,2015,east,13,UC Irvine,2015-03-01 12:00:00
+25,2015,east,6,Providence,2015-03-01 12:00:00
+26,2015,east,11,Dayton,2015-03-01 12:00:00
+27,2015,east,3,Oklahoma,2015-03-01 12:00:00
+28,2015,east,14,Albany,2015-03-01 12:00:00
+29,2015,east,7,Michigan State,2015-03-01 12:00:00
+30,2015,east,10,Georgia,2015-03-01 12:00:00
+31,2015,east,2,Virginia,2015-03-01 12:00:00
+32,2015,east,15,Belmont,2015-03-01 12:00:00
+33,2015,south,1,Duke,2015-03-01 12:00:00
+34,2015,south,16,Robert Morris,2015-03-01 12:00:00
+35,2015,south,8,San Diego State,2015-03-01 12:00:00
+36,2015,south,9,St. John’s,2015-03-01 12:00:00
+37,2015,south,5,Utah,2015-03-01 12:00:00
+38,2015,south,12,Steph. F. Austin,2015-03-01 12:00:00
+39,2015,south,4,Georgetown,2015-03-01 12:00:00
+40,2015,south,13,Eastern Wash.,2015-03-01 12:00:00
+41,2015,south,6,SMU,2015-03-01 12:00:00
+42,2015,south,11,UCLA,2015-03-01 12:00:00
+43,2015,south,3,Iowa State,2015-03-01 12:00:00
+44,2015,south,14,UAB,2015-03-01 12:00:00
+45,2015,south,7,Iowa,2015-03-01 12:00:00
+46,2015,south,10,Davidson,2015-03-01 12:00:00
+47,2015,south,2,Gonzaga,2015-03-01 12:00:00
+48,2015,south,15,North Dakota St.,2015-03-01 12:00:00
+49,2015,west,1,Wisconsin,2015-03-01 12:00:00
+50,2015,west,16,Coastal Caro.,2015-03-01 12:00:00
+51,2015,west,8,Oregon,2015-03-01 12:00:00
+52,2015,west,9,Oklahoma State,2015-03-01 12:00:00
+53,2015,west,5,Arkansas,2015-03-01 12:00:00
+54,2015,west,12,Wofford,2015-03-01 12:00:00
+55,2015,west,4,North Carolina,2015-03-01 12:00:00
+56,2015,west,13,Harvard,2015-03-01 12:00:00
+57,2015,west,6,Xavier,2015-03-01 12:00:00
+58,2015,west,11,Mississippi,2015-03-01 12:00:00
+59,2015,west,3,Baylor,2015-03-01 12:00:00
+60,2015,west,14,Georgia State,2015-03-01 12:00:00
+61,2015,west,7,VCU,2015-03-01 12:00:00
+62,2015,west,10,Ohio State,2015-03-01 12:00:00
+63,2015,west,2,Arizona,2015-03-01 12:00:00
+64,2015,west,15,Texas Southern,2015-03-01 12:00:00

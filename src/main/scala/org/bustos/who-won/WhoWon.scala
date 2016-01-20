@@ -46,26 +46,37 @@ object WhoWon extends App {
     val port = envOrElse("PORT", config.getString("server.port"))
 
     if (args.length > 0) IO(Http) ? Http.Bind(server, "0.0.0.0", args(0).toInt)
-    else IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
+    else {
+      initializeData
+      IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
+    }
   }
 
-
-  def updatePlayers = {
+  def initializeData = {
     import WhoWonTables._
     import WhoWonData._
     import scala.slick.driver.MySQLDriver.simple._
 
     db.withSession { implicit session =>
       playersTable.delete
-      val reader = CSVReader.open(new File("/Users/mauricio/Downloads/whoWonPlayers.csv"))
+      val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
       reader.foreach(fields => {
         println(fields)
-        playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3))
+        playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
+      })
+    }
+    db.withSession { implicit session =>
+      bracketsTable.filter(_.year === 2015).delete
+      val reader = CSVReader.open(new File("data/2015brackets.csv"))
+      reader.foreach(fields => {
+        println(fields)
+        if (fields(0) != "bookId") {
+          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2), fields(3).toInt, fields(4), formatter.parseDateTime(fields(5)))
+        }
       })
     }
   }
 
-  updatePlayers
   doMain
 
 }

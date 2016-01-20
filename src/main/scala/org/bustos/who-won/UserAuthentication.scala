@@ -45,7 +45,13 @@ trait UserAuthentication {
 
   val logger: Logger
 
-  val authentications = Map(("m@bustos.org" -> "test"))
+  val authentications = Map(
+    ("mauricio" -> "test"),
+    ("john" -> "test"),
+    ("scott" -> "test"),
+    ("greg" -> "test"),
+    ("leo" -> "test")
+  )
   var sessionIds = Map.empty[String, String]
 
   def authenticateUser(email: String, password: String)(implicit ec: ExecutionContext): ContextAuthenticator[Authenticated] = {

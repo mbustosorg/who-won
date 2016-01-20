@@ -19,7 +19,7 @@
 
 $(document).ready(function() {
   $("form#loginForm").submit(function() {
-    var username = $('#inputEmail').val();
+    var username = $('#inputName').val();
     var password = $('#inputPassword').val();
     $("#loggingIn").removeClass('hide');
     if (username && password) {
@@ -30,7 +30,7 @@ $(document).ready(function() {
         type: "POST",
         url: "/login",
         contentType: "application/x-www-form-urlencoded; charset=utf-8",
-        data: "inputEmail=" + username + "&inputPassword=" + password,
+        data: "inputName=" + username + "&inputPassword=" + password,
         error: function(XMLHttpRequest, textStatus, errorThrown) {
           $('#authenticationAlert').text(XMLHttpRequest.responseText);
           $('#authenticationAlert').removeClass('hide');

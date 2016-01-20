@@ -53,20 +53,72 @@ class WhoWonData extends Actor with ActorLogging {
 
   implicit val defaultTimeout = Timeout(1 seconds)
 
-  def receive = {
-    case Bet(id, playerId, bookId, spread, amount) => {
-      db.withSession { implicit session =>
-        betsTable += Bet(id, playerId, bookId, spread, amount)
-      }
-      sender ! Bet(id, playerId, bookId, spread, amount)
+  def validPlayer(playerId: String): Boolean = {
+    !(db.withSession { implicit session =>
+      playersTable.filter(_.userName === playerId).list
+    }).isEmpty
+  }
+
+  def validBookId(bookId: Int): Boolean = {
+    !(db.withSession { implicit session =>
+      bracketsTable.filter(_.bookId === bookId).list
+    }).isEmpty
+  }
+
+  def playerIdFromUserName(userName: String): Int = {
+    db.withSession { implicit session =>
+      playersTable.filter(_.userName === userName).list
+    }.head.id
+  }
+
+  def userNameFromPlayerId(id: Int): String= {
+    db.withSession { implicit session =>
+      playersTable.filter(_.id === id).list
+    }.head.userName
+  }
+
+  def betResult(bet: Bet): String = {
+    val gameResults = db.withSession { implicit session =>
+      resultsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
     }
-    case BetsRequest(playerId) => {
-      val bets = db.withSession { implicit session =>
-        betsTable.filter(_.playerId === playerId).list
-      }.map({ bet =>
-        (bet, true)
-      })
-      sender ! Bets(bets)
+    if (gameResults.isEmpty) "Not yet"
+    else {
+      val result = gameResults.head
+      val score = result.score - result.opposingScore + bet.spread
+      if (score > 0) "Win"
+      else if (score < 0) "Lose"
+      else "Push"
+    }
+  }
+
+  def receive = {
+    case bet: Bet => {
+      if (!validPlayer(bet.userName)) sender ! UnknownPlayer
+      else if (!validBookId(bet.bookId)) sender ! UnknownBookId
+      else {
+        val message = db.withSession { implicit session =>
+          val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId }).list
+          if (!previousBet.isEmpty) {
+            betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId }).delete
+            betsTable += bet
+            BetReplaced
+          } else {
+            betsTable += bet
+            BetSubmitted
+          }
+        }
+        sender ! message
+      }
+    }
+    case BetsRequest(userName, year) => {
+      if (validPlayer(userName)) {
+        val bets = db.withSession { implicit session =>
+          betsTable.filter({ x => x.userName === userName && x.year === year }).list
+        }.map({ bet =>
+          (bet, betResult(bet))
+        })
+        sender ! Bets(bets)
+      } else sender ! UnknownPlayer
     }
     case x: GameResult => {
       db.withSession { implicit session =>
@@ -79,6 +131,19 @@ class WhoWonData extends Actor with ActorLogging {
         resultsTable.filter(_.year === year).list
       }
       sender ! GameResults(gameResults)
+    }
+    case BookIdsRequest(year) => {
+      val bookIdResults = db.withSession { implicit session =>
+        bracketsTable.filter(_.year === year).list
+      }
+      sender ! BookIdsResults(bookIdResults)
+    }
+    case PlayerIdRequest(name) => {
+      val player = db.withSession { implicit session =>
+        playersTable.filter(_.userName === name).list
+      }
+      if (player.isEmpty) sender ! UnknownPlayer
+      else sender ! player.head
     }
   }
 }
