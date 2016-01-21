@@ -28,7 +28,7 @@ import spray.json._
 
 object WhoWonTables {
   // Base case classes
-  case class Bet(userName: String, bookId: Int, year: Int, spread: Float, amount: Float)
+  case class Bet(userName: String, bookId: Int, year: Int, spread: Float, amount: Float, betType: String)
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(bookId: Int, year: Int, score: Int, opposingScore: Int, resultTimeStamp: DateTime)
@@ -74,7 +74,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   }
 
   // Base case classes
-  implicit val bet = jsonFormat5(Bet)
+  implicit val bet = jsonFormat6(Bet)
   implicit val bracket = jsonFormat6(Bracket)
   implicit val player = jsonFormat5(Player)
   implicit val result = jsonFormat5(GameResult)
@@ -95,8 +95,9 @@ class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
   def year = column[Int]("year")
   def spread = column[Float]("spread")
   def amount = column[Float]("amount")
+  def betType = column[String]("betType")
 
-  def * = (userName, bookId, year, spread, amount) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
+  def * = (userName, bookId, year, spread, amount, betType) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
 }
 
 class BracketsTable(tag: Tag) extends Table[WhoWonTables.Bracket](tag, "brackets") {

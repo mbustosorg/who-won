@@ -85,7 +85,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     postBet ~
     bets ~
     postGameResult ~
-    getGameResults ~
+    betEntry ~
     bookIds ~
     gamesRequest ~
     reports ~
@@ -234,7 +234,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Bet entry")
   @ApiImplicitParams(Array())
   @ApiResponses(Array())
-  def getGameResults = get {
+  def betEntry = get {
     path("") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {

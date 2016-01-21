@@ -46,11 +46,11 @@ trait UserAuthentication {
   val logger: Logger
 
   val authentications = Map(
-    ("mauricio" -> "test"),
-    ("john" -> "test"),
-    ("scott" -> "test"),
-    ("greg" -> "test"),
-    ("leo" -> "test")
+    ("mauricio" -> "2015"),
+    ("john" -> "march"),
+    ("scott" -> "madness"),
+    ("greg" -> "basket"),
+    ("leo" -> "vegas")
   )
   var sessionIds = Map.empty[String, String]
 
