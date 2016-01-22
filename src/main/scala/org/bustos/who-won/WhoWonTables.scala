@@ -29,8 +29,8 @@ import spray.json._
 object WhoWonTables {
 
   // Constants
-  val StraightBet = "straight"
-  val MoneylineBet = "moneyline"
+  val StraightBet = "ST"
+  val MoneylineBet = "ML"
   val StraightBetPayoff = 1.0 - 0.0455
   // Base case classes
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Float, amount: Float, betType: String)

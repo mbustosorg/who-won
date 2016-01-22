@@ -33,10 +33,10 @@ $(document).ready(function() {
         loadingTimestamp = new Date();
         var betType = '';
         if ($('moneylinePane').hasClass('hide')) {
-            betType = 'straight';
+            betType = 'ST';
             spreadMlAmount = $('#spreadAmount').val();
         } else {
-            betType = 'moneyline';
+            betType = 'ML';
             spreadMlAmount = $('#moneyline').val();
         }
         var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + loadingTimestamp.getFullYear() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
@@ -70,7 +70,6 @@ $(document).ready(function() {
 			    currentWinnings += Number(currentBet.payoff);
 				$('#bets_table_body').append(
                     '<tr id="bets' + currentBet.bet.bookId + '">' +
-					'<td></td>' +
 					'<td>' + currentBet.bet.bookId + '</td>' +
 					'<td>' + currentBet.bracket.teamName + '</td>' +
 					'<td>' + currentBet.bet.betType + '</td>' +
@@ -86,7 +85,6 @@ $(document).ready(function() {
     };
 
     function errorUpdate(results, bookId) {
-         $('#runningQuery').addClass('hide');
          if (results.responseText == 'Unknown Player') {
             $('#submitResult').addClass('alert-danger');
             $('#submitResult').removeClass('alert-success');
