@@ -47,7 +47,7 @@ object WhoWon extends App {
 
     if (args.length > 0) IO(Http) ? Http.Bind(server, "0.0.0.0", args(0).toInt)
     else {
-      initializeData
+      //initializeData
       IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
     }
   }

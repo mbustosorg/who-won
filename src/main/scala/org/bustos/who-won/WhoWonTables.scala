@@ -27,14 +27,20 @@ import scala.slick.driver.MySQLDriver.simple._
 import spray.json._
 
 object WhoWonTables {
+
+  // Constants
+  val StraightBet = "straight"
+  val MoneylineBet = "moneyline"
+  val StraightBetPayoff = 1.0 - 0.0455
   // Base case classes
-  case class Bet(userName: String, bookId: Int, year: Int, spread: Float, amount: Float, betType: String)
+  case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Float, amount: Float, betType: String)
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(bookId: Int, year: Int, score: Int, opposingScore: Int, resultTimeStamp: DateTime)
   // Utility case classes
+  case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Float, resultString: String)
   case class BetsRequest(playerId: String, year: Int)
-  case class Bets(list: List[(Bet, String)])
+  case class Bets(list: List[BetDisplay])
   case class GameResultsRequest(year: Int)
   case class GameResults(list: List[GameResult])
   case class PlayerIdRequest(userName: String)
@@ -79,6 +85,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val player = jsonFormat5(Player)
   implicit val result = jsonFormat5(GameResult)
   // Utility case classes
+  implicit val betDisplay = jsonFormat4(BetDisplay)
   implicit val betsRequest = jsonFormat2(BetsRequest)
   implicit val bets = jsonFormat1(Bets)
   implicit val gameResultsRequest = jsonFormat1(GameResultsRequest)
@@ -93,11 +100,11 @@ class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
   def userName = column[String]("userName")
   def bookId = column[Int]("bookId")
   def year = column[Int]("year")
-  def spread = column[Float]("spread")
+  def spread_ml = column[Float]("spread_ml")
   def amount = column[Float]("amount")
   def betType = column[String]("betType")
 
-  def * = (userName, bookId, year, spread, amount, betType) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
+  def * = (userName, bookId, year, spread_ml, amount, betType) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
 }
 
 class BracketsTable(tag: Tag) extends Table[WhoWonTables.Bracket](tag, "brackets") {

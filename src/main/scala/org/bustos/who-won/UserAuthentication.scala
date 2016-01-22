@@ -21,6 +21,7 @@ package org.bustos.whowon
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.util.Properties.envOrElse
 import akka.util.Timeout
 import akka.pattern.ask
 import akka.actor.{ ActorRef, ActorSystem }
@@ -45,13 +46,11 @@ trait UserAuthentication {
 
   val logger: Logger
 
-  val authentications = Map(
-    ("mauricio" -> "2015"),
-    ("john" -> "march"),
-    ("scott" -> "madness"),
-    ("greg" -> "basket"),
-    ("leo" -> "vegas")
-  )
+  val authentications = {
+    val userPWD = envOrElse("WHOWON_USER_PASSWORDS", "mauricio,2015")
+    userPWD.split(";").map(_.split(",")).map({ x => (x(0), x(1)) }).toMap
+  }
+
   var sessionIds = Map.empty[String, String]
 
   def authenticateUser(email: String, password: String)(implicit ec: ExecutionContext): ContextAuthenticator[Authenticated] = {

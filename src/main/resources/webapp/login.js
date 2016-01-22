@@ -41,6 +41,7 @@ $(document).ready(function() {
           }
           else {
             window.location.replace(host.concat(data));
+            window.location.reload();
           }
 	      $("#loggingIn").addClass('hide');
         }

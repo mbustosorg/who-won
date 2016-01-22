@@ -281,9 +281,8 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
                 setCookie(HttpCookie(UserKey, content = inputName, expires = Some(expiration))) { ctx =>
                   val future = whoWonData ? PlayerIdRequest(inputName)
                   future onSuccess {
-                    case x: Player => {
-                      ctx.complete("")
-                    }
+                    case x: Player => ctx.complete("")
+                    case x: UnknownPlayer => ctx.complete(400, "Unknown Player")
                   }
                 }
               }

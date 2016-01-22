@@ -77,17 +77,41 @@ class WhoWonData extends Actor with ActorLogging {
     }.head.userName
   }
 
-  def betResult(bet: Bet): String = {
-    val gameResults = db.withSession { implicit session =>
+  def betResult(bet: Bet): BetDisplay = {
+    val gameResult = db.withSession { implicit session =>
       resultsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
     }
-    if (gameResults.isEmpty) "Not yet"
-    else {
-      val result = gameResults.head
-      val score = result.score - result.opposingScore + bet.spread
-      if (score > 0) "Win"
-      else if (score < 0) "Lose"
-      else "Push"
+    val bracket = db.withSession { implicit session =>
+      bracketsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
+    }
+    if (gameResult.isEmpty) {
+      BetDisplay(bet, bracket.head, (0.0).toFloat, "Not yet")
+    } else {
+      val result = gameResult.head
+      val score = {
+        if (bet.betType == StraightBet) {
+          result.score - result.opposingScore + bet.spread_ml
+        } else {
+          result.score - result.opposingScore + bet.spread_ml
+        }
+      }
+      val resultType = {
+        if (score > 0) "Win"
+        else if (score < 0) "Lose"
+        else "Push"
+      }
+      val winnings = {
+        if (bet.betType == StraightBet) {
+          bet.amount + bet.amount * StraightBetPayoff
+        } else {
+          if (bet.spread_ml >= 100.0) {
+            bet.amount + bet.amount * (bet.spread_ml / 100.0)
+          } else {
+            bet.amount + bet.amount * (1.0 / (bet.spread_ml / 100.0))
+          }
+        }
+      }
+      BetDisplay(bet, bracket.head, winnings.toFloat, resultType)
     }
   }
 
@@ -97,9 +121,9 @@ class WhoWonData extends Actor with ActorLogging {
       else if (!validBookId(bet.bookId)) sender ! UnknownBookId
       else {
         val message = db.withSession { implicit session =>
-          val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId }).list
+          val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).list
           if (!previousBet.isEmpty) {
-            betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId }).delete
+            betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).delete
             betsTable += bet
             BetReplaced
           } else {
@@ -115,7 +139,7 @@ class WhoWonData extends Actor with ActorLogging {
         val bets = db.withSession { implicit session =>
           betsTable.filter({ x => x.userName === userName && x.year === year }).list
         }.map({ bet =>
-          (bet, betResult(bet))
+          betResult(bet)
         })
         sender ! Bets(bets)
       } else sender ! UnknownPlayer
