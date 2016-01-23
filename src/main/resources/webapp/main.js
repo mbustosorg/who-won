@@ -23,6 +23,18 @@ $(document).ready(function() {
     $('#betSubmit').click(function() {
         submitBet();
     });
+    $('#entryPageNav').click(function() {
+        $('#betEntry').removeClass('hide');
+        $('#report').addClass('hide');
+        $('#entryPageNav').addClass('active');
+        $('#reportPageNav').removeClass('active');
+    });
+    $('#reportPageNav').click(function() {
+        $('#report').removeClass('hide');
+        $('#betEntry').addClass('hide');
+        $('#reportPageNav').addClass('active');
+        $('#entryPageNav').removeClass('active');
+    });
 
     function submitBet() {
         $('#runningQuery').removeClass('hide');
@@ -31,15 +43,17 @@ $(document).ready(function() {
         var betAmount = $('#betAmount').val();
         var userName = getCookie("WHOWON_USER")
         loadingTimestamp = new Date();
+        var year = loadingTimestamp.getFullYear();
+        year = 2015
         var betType = '';
-        if ($('moneylinePane').hasClass('hide')) {
-            betType = 'ST';
-            spreadMlAmount = $('#spreadAmount').val();
-        } else {
+        if ($('#moneylinePane').hasClass('active')) {
             betType = 'ML';
             spreadMlAmount = $('#moneyline').val();
+        } else {
+            betType = 'ST';
+            spreadMlAmount = $('#spreadAmount').val();
         }
-        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + loadingTimestamp.getFullYear() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
+        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
         $.ajax({
             type: "POST",
             url: '/bets/',
@@ -58,8 +72,10 @@ $(document).ready(function() {
     function displayCurrentBets() {
         var userName = getCookie("WHOWON_USER")
         loadingTimestamp = new Date();
+        var year = loadingTimestamp.getFullYear();
+        year = 2015;
 		$.ajax({
-			url: '/bets/' + userName + '/' + loadingTimestamp.getFullYear(),
+			url: '/bets/' + userName + '/' + year,
 			cache: false
 		}).done (function (bets) {
 			$('tbody#bets_table_body').empty();
@@ -121,7 +137,6 @@ $(document).ready(function() {
 					'<option value =\"' + labelString + '\">' + labelString + '</option>'
 				);
  			});
-            $('#runningQuery').addClass('hide');
 		});
     	$('#spreadAmount').empty();
 		for (i = -40.0; i < 40; i = i + 0.5) {

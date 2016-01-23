@@ -240,7 +240,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         cookie("WHOWON_USER") { username => {
           handleRejections(authorizationRejection) {
             authenticate(authenticateSessionId(sessionId.content, username.content)) { authentication =>
-              getFromResource("webapp/betEntry.html")
+              getFromResource("webapp/main.html")
             }
           }
         }

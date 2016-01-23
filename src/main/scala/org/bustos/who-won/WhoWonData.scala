@@ -53,39 +53,39 @@ class WhoWonData extends Actor with ActorLogging {
 
   implicit val defaultTimeout = Timeout(1 seconds)
 
-  def validPlayer(playerId: String): Boolean = {
-    !(db.withSession { implicit session =>
-      playersTable.filter(_.userName === playerId).list
-    }).isEmpty
+  val players = {
+    (db.withSession { implicit session =>
+      playersTable.list
+    }).map({ x => (x.userName, x)}).toMap
   }
 
-  def validBookId(bookId: Int): Boolean = {
-    !(db.withSession { implicit session =>
-      bracketsTable.filter(_.bookId === bookId).list
-    }).isEmpty
+  val playersById = {
+    (db.withSession { implicit session =>
+      playersTable.list
+    }).map({ x => (x.id, x)}).toMap
   }
 
-  def playerIdFromUserName(userName: String): Int = {
-    db.withSession { implicit session =>
-      playersTable.filter(_.userName === userName).list
-    }.head.id
+  val bookIds = {
+    (db.withSession { implicit session =>
+      bracketsTable.list
+    }).map({ x => ((x.bookId, x.year), x)}).toMap
   }
 
-  def userNameFromPlayerId(id: Int): String= {
-    db.withSession { implicit session =>
-      playersTable.filter(_.id === id).list
-    }.head.userName
-  }
+  def validPlayer(playerId: String): Boolean = players.contains(playerId)
+
+  def validBookId(bookId: Int, year: Int): Boolean = bookIds.contains((bookId, year))
+
+  def playerIdFromUserName(userName: String): Int = players(userName).id
+
+  def userNameFromPlayerId(id: Int): String = playersById(id).userName
 
   def betResult(bet: Bet): BetDisplay = {
     val gameResult = db.withSession { implicit session =>
       resultsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
     }
-    val bracket = db.withSession { implicit session =>
-      bracketsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
-    }
+    val bracket = bookIds((bet.bookId, bet.year))
     if (gameResult.isEmpty) {
-      BetDisplay(bet, bracket.head, (0.0).toFloat, "Not yet")
+      BetDisplay(bet, bracket, (0.0).toFloat, "Not yet")
     } else {
       val result = gameResult.head
       val score = {
@@ -111,14 +111,14 @@ class WhoWonData extends Actor with ActorLogging {
           }
         }
       }
-      BetDisplay(bet, bracket.head, winnings.toFloat, resultType)
+      BetDisplay(bet, bracket, winnings.toFloat, resultType)
     }
   }
 
   def receive = {
     case bet: Bet => {
       if (!validPlayer(bet.userName)) sender ! UnknownPlayer
-      else if (!validBookId(bet.bookId)) sender ! UnknownBookId
+      else if (!validBookId(bet.bookId, bet.year)) sender ! UnknownBookId
       else {
         val message = db.withSession { implicit session =>
           val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).list
