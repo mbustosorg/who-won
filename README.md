@@ -16,14 +16,14 @@ To set these in Heroku, you can do the following:
 ```bash
 $ heroku config:set WHOWON_MYSQL_URL=jdbc:mysql://mysql.*****:3306/whowon
 Setting config vars and restarting who-won... done
-WHOWON_MYSQL_URL: jdbc:mysql://mysql.bustos.org:3306/whowon
+WHOWON_MYSQL_URL: jdbc:mysql://*****:3306/whowon
 $ heroku config:set WHOWON_MYSQL_USER=whowonuser
 Setting config vars and restarting who-won... done
 WHOWON_MYSQL_USER: whowonuser
 $ heroku config:set WHOWON_MYSQL_PASSWORD=*****
 Setting config vars and restarting who-won... done
 WHOWON_MYSQL_PASSWORDS: *****
-$ heroku config:set WHOWON_USER_PASSWORDS=user1,pass1;user2,pass2
+$ heroku config:set WHOWON_USER_PASSWORDS="user1,pass1;user2,pass2"
 Setting config vars and restarting who-won... done
 WHOWON_USER_PASSWORDS: *****
 ```
