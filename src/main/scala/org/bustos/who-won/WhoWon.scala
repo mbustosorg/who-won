@@ -40,6 +40,8 @@ object WhoWon extends App {
     implicit val system = ActorSystem()
     implicit val timeout = Timeout(DurationInt(5).seconds)
 
+    initializeData
+
     val server = system.actorOf(Props[WhoWonServiceActor], "whowonRoutes")
     val config = ConfigFactory.load
 
@@ -47,7 +49,6 @@ object WhoWon extends App {
 
     if (args.length > 0) IO(Http) ? Http.Bind(server, "0.0.0.0", args(0).toInt)
     else {
-      //initializeData
       IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
     }
   }
@@ -72,6 +73,16 @@ object WhoWon extends App {
         println(fields)
         if (fields(0) != "bookId") {
           bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2), fields(3).toInt, fields(4), formatter.parseDateTime(fields(5)))
+        }
+      })
+    }
+    db.withSession { implicit session =>
+      resultsTable.filter(_.year === 2015).delete
+      val reader = CSVReader.open(new File("data/2015results.csv"))
+      reader.foreach(fields => {
+        println(fields)
+        if (fields(0) != "bookId") {
+          resultsTable += GameResult(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3).toInt, formatter.parseDateTime(fields(4)))
         }
       })
     }

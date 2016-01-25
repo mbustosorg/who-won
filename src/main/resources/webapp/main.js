@@ -34,7 +34,46 @@ $(document).ready(function() {
         $('#betEntry').addClass('hide');
         $('#reportPageNav').addClass('active');
         $('#entryPageNav').removeClass('active');
+        updateWinnings();
     });
+
+    function updateWinnings() {
+        if (!$('#report').hasClass('hide')) {
+            var year = loadingTimestamp.getFullYear();
+            year = 2015;
+            $.ajax({
+                url: '/winnings/' + year,
+                cache: false
+            }).done(function(results) {
+                var data = new google.visualization.DataTable();
+                data.addColumn('date', 'Time');
+                for (i = 0; i < results.list.length; i++) {
+                  data.addColumn('number', results.list[i].userName);
+                }
+                for (i = 0; i < results.timestamps.length; i++) {
+                  var row = [new Date(results.timestamps[i])];
+                  for (j = 0; j < results.list.length; j++) {
+                     row[j + 1] = Number(results.list[j].winnings[i].toFixed(2));
+                  }
+                  data.addRow(row);
+                }
+                var options = {
+                  title: 'Net Winnings',
+                  legend: { position: 'bottom' },
+                  hAxis: {
+                    title: 'Time'
+                  },
+                  vAxis: {
+                    title: '$',
+                    minValue: 0
+                  }
+                };
+                var chart = new google.visualization.LineChart(document.getElementById('winningsChart'));
+                chart.draw(data, options);
+            });
+            setTimeout(updateWinnings, 60000);
+        }
+    };
 
     function submitBet() {
         $('#runningQuery').removeClass('hide');
@@ -64,7 +103,7 @@ $(document).ready(function() {
             statusUpdate(results, $('#bookId').val());
             displayCurrentBets();
         }).error(function(results) {
-            errorUpdate(results, $('#bookId').val());
+            errorUpdate(results, $('#bookId').val(), betType);
             displayCurrentBets();
         });
      };
@@ -95,12 +134,12 @@ $(document).ready(function() {
 					'</tr>'
 				);
 			});
-			$('#betHeader').text('(Outlay: $' + currentOutlay +', Winnings: $' + currentWinnings + ')');
+			$('#betHeader').text('(Outlay: $' + currentOutlay +', Winnings: $' + currentWinnings.toFixed(2) + ')');
             $('#runningQuery').addClass('hide');
 		});
     };
 
-    function errorUpdate(results, bookId) {
+    function errorUpdate(results, bookId, betType) {
          if (results.responseText == 'Unknown Player') {
             $('#submitResult').addClass('alert-danger');
             $('#submitResult').removeClass('alert-success');
@@ -112,11 +151,11 @@ $(document).ready(function() {
          } else if (results.responseText == 'Bet Submitted') {
             $('#submitResult').addClass('alert-success');
             $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>   Submitted </strong> for '+ bookId);
+            $('#submitResult').html('<strong>   Submitted ' + betType + ' bet</strong> for '+ bookId);
          } else if (results.responseText == 'Bet Replaced') {
             $('#submitResult').addClass('alert-success');
             $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>   Replaced previous bet </strong> for '+ bookId);
+            $('#submitResult').html('<strong>   Replaced previous ' + betType + ' bet </strong> for '+ bookId);
          }
     };
 
@@ -126,8 +165,10 @@ $(document).ready(function() {
 
     function populateBookIds() {
         loadingTimestamp = new Date();
+        var year = loadingTimestamp.getFullYear();
+        year = 2015;
         $.ajax({
-            url: '/bookIds/' + '2015',
+            url: '/bookIds/' + year,
             cache: false
         }).done(function(results) {
 			$('#bookId').empty();

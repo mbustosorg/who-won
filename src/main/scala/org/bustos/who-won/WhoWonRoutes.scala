@@ -88,6 +88,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     betEntry ~
     bookIds ~
     gamesRequest ~
+    winnings ~
     reports ~
     login
 
@@ -224,6 +225,25 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         future onSuccess {
           case BookIdsResults(list) => {
             ctx.complete(list.toJson.toString)
+          }
+        }
+      }
+    }
+  }
+
+  @Path("winnings/{year}")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get summary winnings results for a year")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
+  ))
+  @ApiResponses(Array())
+  def winnings = get {
+    pathPrefix("winnings" / IntNumber) { (year) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val future = whoWonData ? WinningsTrackRequest(year)
+        future onSuccess {
+          case WinningsTrack(timestamps, list) => {
+            ctx.complete(WinningsTrack(timestamps, list).toJson.toString)
           }
         }
       }

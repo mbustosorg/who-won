@@ -33,12 +33,12 @@ object WhoWonTables {
   val MoneylineBet = "ML"
   val StraightBetPayoff = 1.0 - 0.0455
   // Base case classes
-  case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Float, amount: Float, betType: String)
+  case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String)
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(bookId: Int, year: Int, score: Int, opposingScore: Int, resultTimeStamp: DateTime)
   // Utility case classes
-  case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Float, resultString: String)
+  case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
   case class BetsRequest(playerId: String, year: Int)
   case class Bets(list: List[BetDisplay])
   case class GameResultsRequest(year: Int)
@@ -46,6 +46,9 @@ object WhoWonTables {
   case class PlayerIdRequest(userName: String)
   case class BookIdsRequest(year: Int)
   case class BookIdsResults(list: List[Bracket])
+  case class WinningsTrackRequest(year: Int)
+  case class PlayerWinnings(userName: String, winnings: List[Double], percentage: List[Double])
+  case class WinningsTrack(timestamps: List[DateTime], list: List[PlayerWinnings])
   // Error case classes
   case class UnknownPlayer()
   case class UnknownBookId()
@@ -57,8 +60,9 @@ object WhoWonTables {
   val playersTable = TableQuery[PlayersTable]
   val resultsTable = TableQuery[ResultsTable]
 
-  val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+  val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
 
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
   implicit def dateTime =
     MappedColumnType.base[DateTime, Timestamp](
        dt => new Timestamp(dt.getMillis),
@@ -92,6 +96,8 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val gameResults = jsonFormat1(GameResults)
   implicit val bookIdsRequest = jsonFormat1(BookIdsRequest)
   implicit val bookIdsResults = jsonFormat1(BookIdsResults)
+  implicit val playerWinnings = jsonFormat3(PlayerWinnings)
+  implicit val winningsTrack = jsonFormat2(WinningsTrack)
 }
 
 class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
@@ -100,8 +106,8 @@ class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
   def userName = column[String]("userName")
   def bookId = column[Int]("bookId")
   def year = column[Int]("year")
-  def spread_ml = column[Float]("spread_ml")
-  def amount = column[Float]("amount")
+  def spread_ml = column[Double]("spread_ml")
+  def amount = column[Double]("amount")
   def betType = column[String]("betType")
 
   def * = (userName, bookId, year, spread_ml, amount, betType) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)

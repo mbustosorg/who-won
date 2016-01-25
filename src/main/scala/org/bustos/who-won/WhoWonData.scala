@@ -23,6 +23,7 @@ import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
+import scala.collection.immutable.Iterable
 import scala.util.Properties.envOrElse
 import scala.slick.driver.MySQLDriver.simple._
 import org.joda.time._
@@ -68,7 +69,9 @@ class WhoWonData extends Actor with ActorLogging {
   val bookIds = {
     (db.withSession { implicit session =>
       bracketsTable.list
-    }).map({ x => ((x.bookId, x.year), x)}).toMap
+    }).map({ x =>
+      ((x.bookId, x.year), x)
+    }).toMap
   }
 
   def validPlayer(playerId: String): Boolean = players.contains(playerId)
@@ -85,7 +88,7 @@ class WhoWonData extends Actor with ActorLogging {
     }
     val bracket = bookIds((bet.bookId, bet.year))
     if (gameResult.isEmpty) {
-      BetDisplay(bet, bracket, (0.0).toFloat, "Not yet")
+      BetDisplay(bet, bracket, (0.0).toDouble, "Not yet")
     } else {
       val result = gameResult.head
       val score = {
@@ -111,7 +114,7 @@ class WhoWonData extends Actor with ActorLogging {
           }
         }
       }
-      BetDisplay(bet, bracket, winnings.toFloat, resultType)
+      BetDisplay(bet, bracket, winnings.toDouble, resultType)
     }
   }
 
@@ -155,6 +158,27 @@ class WhoWonData extends Actor with ActorLogging {
         resultsTable.filter(_.year === year).list
       }
       sender ! GameResults(gameResults)
+    }
+    case WinningsTrackRequest(year) => {
+      val gameResults = db.withSession { implicit session =>
+        resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
+      }
+      val bets = db.withSession { implicit session =>
+        betsTable.filter(_.year === year).list.groupBy(_.userName)
+      }
+      val timestamps = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
+      val acc = bets.map({ case (k, v) =>
+        (k, timestamps.map({ timestamp =>
+          v.foldLeft(0.0)({ (acc, x) =>
+            val game = gameResults(x.bookId)
+            if (game.resultTimeStamp.getMillis <= timestamp.getMillis) acc + betResult(x).payoff
+            else acc
+          })
+        }))
+      }).map({ case (k, v) => PlayerWinnings(k, v, List())})
+      val tracking = WinningsTrack(timestamps, acc.toList)
+      println(tracking)
+      sender ! tracking
     }
     case BookIdsRequest(year) => {
       val bookIdResults = db.withSession { implicit session =>
