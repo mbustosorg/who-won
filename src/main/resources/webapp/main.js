@@ -39,6 +39,7 @@ $(document).ready(function() {
 
     function updateWinnings() {
         if (!$('#report').hasClass('hide')) {
+            $('#reportQuery').removeClass('hide');
             var year = loadingTimestamp.getFullYear();
             year = 2015;
             $.ajax({
@@ -67,7 +68,20 @@ $(document).ready(function() {
                   title: 'Net Winnings',
                   legend: { position: 'bottom' },
                   hAxis: {
-                    title: 'Time'
+                    title: 'Time',
+                    gridlines: {
+                      count: -1,
+                      units: {
+                        days: {format: ['MMM dd']},
+                        hours: {format: ['HH:mm', 'ha']},
+                      }
+                    },
+                    minorGridlines: {
+                      units: {
+                        hours: {format: ['hh:mm:ss a', 'ha']},
+                        minutes: {format: ['HH:mm a Z', ':mm']}
+                      }
+                    }
                   },
                   vAxis: {
                     title: '$',
@@ -80,7 +94,20 @@ $(document).ready(function() {
                   title: 'Percentage Won',
                   legend: { position: 'bottom' },
                   hAxis: {
-                    title: 'Time'
+                    title: 'Time',
+                    gridlines: {
+                      count: -1,
+                      units: {
+                        days: {format: ['MMM dd']},
+                        hours: {format: ['HH:mm', 'ha']},
+                      }
+                    },
+                    minorGridlines: {
+                      units: {
+                        hours: {format: ['hh:mm:ss a', 'ha']},
+                        minutes: {format: ['HH:mm a Z', ':mm']}
+                      }
+                    }
                   },
                   vAxis: {
                     title: '%',
@@ -89,6 +116,7 @@ $(document).ready(function() {
                 };
                 var chart = new google.visualization.LineChart(document.getElementById('percentageWinChart'));
                 chart.draw(pctData, options);
+                $('#reportQuery').addClass('hide');
             });
             setTimeout(updateWinnings, 60000);
         }

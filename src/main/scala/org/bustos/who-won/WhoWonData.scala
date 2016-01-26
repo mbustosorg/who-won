@@ -169,7 +169,8 @@ class WhoWonData extends Actor with ActorLogging {
       val outlays = db.withSession { implicit session =>
         betsTable.groupBy(_.userName).map({ case (user, bets) => (user, bets.map(_.amount).sum)}).list.toMap
       }
-      val timestamps = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
+      val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
+      val timestamps = { new DateTime(resultsTimestamps.head).plusMinutes(-15) } :: resultsTimestamps
       val acc = bets.map({ case (k, v) =>
         (k, timestamps.map({ timestamp =>
           v.foldLeft((-outlays(k).get, 0.0, 0))({ (acc, x) =>
@@ -178,7 +179,7 @@ class WhoWonData extends Actor with ActorLogging {
               if (game.resultTimeStamp.getMillis <= timestamp.getMillis) {
                 val payoff = betResult(x).payoff
                 val win = if (payoff > 0.0) 1 else 0
-                (acc._1 + payoff, (acc._2 + win) / (acc._3 + 1), acc._3 + 1)
+                (acc._1 + payoff, (acc._2 * acc._3 + win) / (acc._3 + 1), acc._3 + 1)
               } else acc
             } else acc
           })
