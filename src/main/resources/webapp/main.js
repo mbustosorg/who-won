@@ -47,15 +47,21 @@ $(document).ready(function() {
             }).done(function(results) {
                 var data = new google.visualization.DataTable();
                 data.addColumn('date', 'Time');
+                var pctData = new google.visualization.DataTable();
+                pctData.addColumn('date', 'Time');
                 for (i = 0; i < results.list.length; i++) {
                   data.addColumn('number', results.list[i].userName);
+                  pctData.addColumn('number', results.list[i].userName);
                 }
                 for (i = 0; i < results.timestamps.length; i++) {
                   var row = [new Date(results.timestamps[i])];
+                  var pctRow = [new Date(results.timestamps[i])];
                   for (j = 0; j < results.list.length; j++) {
                      row[j + 1] = Number(results.list[j].winnings[i].toFixed(2));
+                 pctRow[j + 1] = Number(results.list[j].percentage[i].toFixed(2));
                   }
                   data.addRow(row);
+                  pctData.addRow(pctRow);
                 }
                 var options = {
                   title: 'Net Winnings',
@@ -70,6 +76,19 @@ $(document).ready(function() {
                 };
                 var chart = new google.visualization.LineChart(document.getElementById('winningsChart'));
                 chart.draw(data, options);
+                var options = {
+                  title: 'Percentage Won',
+                  legend: { position: 'bottom' },
+                  hAxis: {
+                    title: 'Time'
+                  },
+                  vAxis: {
+                    title: '%',
+                    minValue: 0
+                  }
+                };
+                var chart = new google.visualization.LineChart(document.getElementById('percentageWinChart'));
+                chart.draw(pctData, options);
             });
             setTimeout(updateWinnings, 60000);
         }

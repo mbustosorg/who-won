@@ -166,16 +166,24 @@ class WhoWonData extends Actor with ActorLogging {
       val bets = db.withSession { implicit session =>
         betsTable.filter(_.year === year).list.groupBy(_.userName)
       }
+      val outlays = db.withSession { implicit session =>
+        betsTable.groupBy(_.userName).map({ case (user, bets) => (user, bets.map(_.amount).sum)}).list.toMap
+      }
       val timestamps = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
       val acc = bets.map({ case (k, v) =>
         (k, timestamps.map({ timestamp =>
-          v.foldLeft(0.0)({ (acc, x) =>
-            val game = gameResults(x.bookId)
-            if (game.resultTimeStamp.getMillis <= timestamp.getMillis) acc + betResult(x).payoff
-            else acc
+          v.foldLeft((-outlays(k).get, 0.0, 0))({ (acc, x) =>
+            if (gameResults.contains(x.bookId)) {
+              val game = gameResults(x.bookId)
+              if (game.resultTimeStamp.getMillis <= timestamp.getMillis) {
+                val payoff = betResult(x).payoff
+                val win = if (payoff > 0.0) 1 else 0
+                (acc._1 + payoff, (acc._2 + win) / (acc._3 + 1), acc._3 + 1)
+              } else acc
+            } else acc
           })
         }))
-      }).map({ case (k, v) => PlayerWinnings(k, v, List())})
+      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1}), v.map({ x => x._2}))})
       val tracking = WinningsTrack(timestamps, acc.toList)
       println(tracking)
       sender ! tracking
