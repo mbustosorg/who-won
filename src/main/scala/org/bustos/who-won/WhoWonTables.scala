@@ -36,13 +36,14 @@ object WhoWonTables {
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String)
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
-  case class GameResult(bookId: Int, year: Int, score: Int, opposingScore: Int, resultTimeStamp: DateTime)
+  case class GameResult(year: Int, bookId: Int, score: Int, opposingBookId: Int, opposingScore: Int, resultTimeStamp: DateTime)
   // Utility case classes
   case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
   case class BetsRequest(playerId: String, year: Int)
   case class Bets(list: List[BetDisplay])
   case class GameResultsRequest(year: Int)
-  case class GameResults(list: List[GameResult])
+  case class GameResultDisplay(favBookId: Int, undBookId: Int, favSeed: Int, undSeed: Int, favName: String, undName: String, favScore: Int, undScore: Int, timestamp: DateTime)
+  case class GameResults(list: List[GameResultDisplay])
   case class PlayerIdRequest(userName: String)
   case class BookIdsRequest(year: Int)
   case class BookIdsResults(list: List[Bracket])
@@ -87,12 +88,13 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val bet = jsonFormat6(Bet)
   implicit val bracket = jsonFormat6(Bracket)
   implicit val player = jsonFormat5(Player)
-  implicit val result = jsonFormat5(GameResult)
+  implicit val result = jsonFormat6(GameResult)
   // Utility case classes
   implicit val betDisplay = jsonFormat4(BetDisplay)
   implicit val betsRequest = jsonFormat2(BetsRequest)
   implicit val bets = jsonFormat1(Bets)
   implicit val gameResultsRequest = jsonFormat1(GameResultsRequest)
+  implicit val gameResultDisplay = jsonFormat9(GameResultDisplay)
   implicit val gameResults = jsonFormat1(GameResults)
   implicit val bookIdsRequest = jsonFormat1(BookIdsRequest)
   implicit val bookIdsResults = jsonFormat1(BookIdsResults)
@@ -140,11 +142,12 @@ class PlayersTable(tag: Tag) extends Table[WhoWonTables.Player](tag, "players") 
 class ResultsTable(tag: Tag) extends Table[WhoWonTables.GameResult](tag, "results") {
   import WhoWonTables.dateTime
 
-  def bookId = column[Int]("bookId")
   def year = column[Int]("year")
+  def bookId = column[Int]("bookId")
   def score = column[Int]("score")
+  def opposingBookId = column[Int]("opposingBookId")
   def opposingScore = column[Int]("opposingScore")
   def resultTimeStamp = column[DateTime]("resultTimeStamp")
 
-  def * = (bookId, year, score, opposingScore, resultTimeStamp) <> (WhoWonTables.GameResult.tupled, WhoWonTables.GameResult.unapply)
+  def * = (year, bookId, score, opposingBookId, opposingScore, resultTimeStamp) <> (WhoWonTables.GameResult.tupled, WhoWonTables.GameResult.unapply)
 }

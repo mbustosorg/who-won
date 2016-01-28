@@ -40,17 +40,16 @@ object WhoWon extends App {
     implicit val system = ActorSystem()
     implicit val timeout = Timeout(DurationInt(5).seconds)
 
+    val config = ConfigFactory.load
+    val portFromEnv = envOrElse("PORT", "")
+    val port = envOrElse("PORT", config.getString("server.port"))
+
     initializeData
 
     val server = system.actorOf(Props[WhoWonServiceActor], "whowonRoutes")
-    val config = ConfigFactory.load
-
-    val port = envOrElse("PORT", config.getString("server.port"))
 
     if (args.length > 0) IO(Http) ? Http.Bind(server, "0.0.0.0", args(0).toInt)
-    else {
-      IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
-    }
+    else IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
   }
 
   def initializeData = {
@@ -82,7 +81,7 @@ object WhoWon extends App {
       reader.foreach(fields => {
         println(fields)
         if (fields(0) != "bookId") {
-          resultsTable += GameResult(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3).toInt, formatter.parseDateTime(fields(4)))
+          resultsTable += GameResult(fields(1).toInt, fields(0).toInt, fields(2).toInt, fields(3).toInt, fields(4).toInt, formatter.parseDateTime(fields(5)))
         }
       })
     }

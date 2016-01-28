@@ -186,6 +186,69 @@ $(document).ready(function() {
 		});
     };
 
+    function formatTimestamp(timestamp) {
+        var hours = timestamp.getHours();
+        var minutes = timestamp.getMinutes();
+        if (hours > 12) hours -= 12;
+        if (minutes < 10) minutes = "0" + minutes;
+        return hours + ":" + minutes;
+    };
+
+    function displayGameResults() {
+        loadingTimestamp = new Date();
+        var year = loadingTimestamp.getFullYear();
+        year = 2015;
+		$.ajax({
+			url: '/games/' + year,
+			cache: false
+		}).done (function (games) {
+			$('tbody#gamesLeft').empty();
+			$('tbody#gamesRight').empty();
+			for (i = 0; i < games.length; i = i + 2) {
+			    var currentGame = games[i];
+                var timestamp = formatTimestamp(new Date(currentGame.timestamp));
+				$('#gamesLeft').append(
+                    '<tr id="gameResult' + currentGame.favBookId + '">' +
+					'<td>' + currentGame.favBookId + '</td>' +
+					'<td>' + currentGame.favSeed + '</td>' +
+					'<td>' + currentGame.favName + '</td>' +
+					'<td>' + currentGame.favScore  + '</td>' +
+					'<td>' + timestamp + '</td>' +
+					'</tr>');
+				$('#gamesLeft').append(
+                    '<tr id="gameResult' + currentGame.undBookId + '">' +
+					'<td>' + currentGame.undBookId+ '</td>' +
+					'<td>' + currentGame.undSeed + '</td>' +
+					'<td>' + currentGame.undName + '</td>' +
+					'<td>' + currentGame.undScore  + '</td>' +
+					'<td></td>' +
+					'</tr>');
+			    $('#gamesLeft').append('<tr></tr>');
+				if (i < games.length - 1) {
+                    currentGame = games[i + 1];
+                    timestamp = formatTimestamp(new Date(currentGame.timestamp));
+                    $('#gamesRight').append(
+                        '<tr id="gameResult' + currentGame.favBookId + '">' +
+                        '<td>' + currentGame.favBookId + '</td>' +
+                        '<td>' + currentGame.favSeed + '</td>' +
+                        '<td>' + currentGame.favName + '</td>' +
+                        '<td>' + currentGame.favScore  + '</td>' +
+                        '<td>' + timestamp + '</td>' +
+                        '</tr>');
+                    $('#gamesRight').append(
+                        '<tr id="gameResult' + currentGame.undBookId + '">' +
+                        '<td>' + currentGame.undBookId + '</td>' +
+                        '<td>' + currentGame.undSeed + '</td>' +
+                        '<td>' + currentGame.undName + '</td>' +
+                        '<td>' + currentGame.undScore  + '</td>' +
+                        '<td></td>' +
+                        '</tr><tr></tr>');
+     			    $('#gamesRight').append('<tr></tr>');
+                }
+            }
+    	});
+    };
+
     function errorUpdate(results, bookId, betType) {
          if (results.responseText == 'Unknown Player') {
             $('#submitResult').addClass('alert-danger');
@@ -261,5 +324,6 @@ $(document).ready(function() {
     };
 
     displayCurrentBets();
+    displayGameResults();
     populateBookIds();
 });

@@ -89,7 +89,6 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     bookIds ~
     gamesRequest ~
     winnings ~
-    reports ~
     login
 
   val authenticationRejection = RejectionHandler {
@@ -269,11 +268,6 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
       } ~ getFromResource("webapp/login.html")
     }
   }
-
-  def reports =
-    path("report") {
-      getFromResource("webapp/report.html")
-    }
 
   def admin = get {
     path("admin") {
