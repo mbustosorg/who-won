@@ -165,7 +165,6 @@ class WhoWonData extends Actor with ActorLogging {
           .list
           .map({ x => GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9) })
       }
-      println(gameResults)
       sender ! GameResults(gameResults)
     }
     case WinningsTrackRequest(year) => {
@@ -195,7 +194,6 @@ class WhoWonData extends Actor with ActorLogging {
         }))
       }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1}), v.map({ x => x._2}))})
       val tracking = WinningsTrack(timestamps, acc.toList)
-      println(tracking)
       sender ! tracking
     }
     case BookIdsRequest(year) => {

@@ -89,6 +89,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     bookIds ~
     gamesRequest ~
     winnings ~
+    saveTicket ~
     login
 
   val authenticationRejection = RejectionHandler {
@@ -182,6 +183,22 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   @ApiResponses(Array())
   def postGameResult = post {
     pathPrefix("games") {
+      respondWithMediaType(`application/json`) { ctx =>
+        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
+        val future = whoWonData ? newResult
+        future onSuccess {
+          case x: String => ctx.complete(x)
+        }
+      }
+    }
+  }
+
+  @Path("ticket")
+  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a ticket image")
+  @ApiImplicitParams(Array())
+  @ApiResponses(Array())
+  def saveTicket = post {
+    pathPrefix("ticket") {
       respondWithMediaType(`application/json`) { ctx =>
         val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
         val future = whoWonData ? newResult

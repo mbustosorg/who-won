@@ -221,9 +221,7 @@ $(document).ready(function() {
 					'<td>' + currentGame.undSeed + '</td>' +
 					'<td>' + currentGame.undName + '</td>' +
 					'<td>' + currentGame.undScore  + '</td>' +
-					'<td></td>' +
-					'</tr>');
-			    $('#gamesLeft').append('<tr></tr>');
+					'</tr><tr><td/><td/><td/><td/></tr>');
 				if (i < games.length - 1) {
                     currentGame = games[i + 1];
                     timestamp = formatTimestamp(new Date(currentGame.timestamp));
@@ -241,9 +239,7 @@ $(document).ready(function() {
                         '<td>' + currentGame.undSeed + '</td>' +
                         '<td>' + currentGame.undName + '</td>' +
                         '<td>' + currentGame.undScore  + '</td>' +
-                        '<td></td>' +
-                        '</tr><tr></tr>');
-     			    $('#gamesRight').append('<tr></tr>');
+                        '</tr><tr><td/><td/><td/><td/></tr>');
                 }
             }
     	});
