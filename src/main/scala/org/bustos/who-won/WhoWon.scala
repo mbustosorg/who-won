@@ -41,10 +41,10 @@ object WhoWon extends App {
     implicit val timeout = Timeout(DurationInt(5).seconds)
 
     val config = ConfigFactory.load
-    val portFromEnv = envOrElse("PORT", "")
+    val portFromEnv = envOrElse("PORT", "") != ""
     val port = envOrElse("PORT", config.getString("server.port"))
 
-    initializeData
+    if (!portFromEnv) initializeData
 
     val server = system.actorOf(Props[WhoWonServiceActor], "whowonRoutes")
 
