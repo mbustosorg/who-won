@@ -19,11 +19,14 @@
 
 package org.bustos.whowon
 
+import java.io.{FileOutputStream, File, ByteArrayInputStream}
+import javax.imageio.ImageIO
 import javax.ws.rs.Path
 
 import akka.actor._
 import akka.pattern.ask
-import akka.util.Timeout
+import akka.util.{ByteString, Timeout}
+import sun.misc.BASE64Decoder
 import scala.concurrent.Future
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.annotations._
@@ -200,11 +203,21 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   def saveTicket = post {
     pathPrefix("ticket") {
       respondWithMediaType(`application/json`) { ctx =>
-        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
-        val future = whoWonData ? newResult
-        future onSuccess {
-          case x: String => ctx.complete(x)
+        ctx.request.entity.data.toByteString match {
+          case x: ByteString => {
+            val decodedString = x.decodeString("ISO_8859_1").split(',').tail.head
+            val decodedFile = new File("test.png")
+            val decoded = new BASE64Decoder().decodeBuffer(decodedString)
+            val decodedStream = new FileOutputStream(decodedFile)
+            decodedStream.write(decoded)
+            decodedStream.close()
+          }
         }
+        ctx.complete("")
+//        val future = whoWonData ? ""
+//        future onSuccess {
+//          case x: String =>
+//        }
       }
     }
   }

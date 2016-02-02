@@ -22,7 +22,7 @@
     <script type="text/javascript">
         google.load("visualization", "1", {packages:["corechart"]});
     </script>
-</head>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/camanjs/4.0.0/caman.full.js"></script></head>
 <nav class="navbar navbar-default">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -39,12 +39,12 @@
     <div class="list-group col-sm-4">
         <div id="betEntry">
             <ul class="nav nav-tabs">
-                <li class="active"><a data-toggle="tab" href="#straightPane">Straight</a></li>
-                <li><a data-toggle="tab" href="#moneylinePane">Money Line</a></li>
-                <li><a data-toggle="tab" href="#photoPage">Scan </a></li>
+                <li id='straightBetNav' class="active"><a data-toggle="tab" href="#straightPane">Straight</a></li>
+                <li id='moneyLineBetNav'><a data-toggle="tab" href="#moneylinePane">Money Line</a></li>
+                <li id='scanBetNav'><a data-toggle="tab" href="#photoPage">Scan</a></li>
             </ul>
             <li class="list-group-item" style="border: 0">
-                <div class="form-horizontal">
+                <div class="form-horizontal" id='manualEntryTab'>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">Sportsbook ID</label>
                         <div class="col-sm-8">
@@ -77,18 +77,27 @@
                             </select>
                         </div>
                     </div>
+                </div>
+                <div id='photoPage' class='hide'>
+                    <video id="snapVideo" width="640" height="480" autoplay></video>
+                    <button id="snapButton">Snap</button>
+                    <button id="snapRetakeButton">Retake</button>
+                </div>
+            </li>
+            <li class="list-group-item" style="border: 0">
+                <div class="form-horizontal">
                     <div class="form-group">
-                        <div class="col-sm-offset-4 col-sm-2">
+                        <div class="col-lg-offset-4 col-lg-2">
                             <button type="submit" class="btn btn-default" id="betSubmit">Submit</button>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-lg-6">
                             <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin' id='runningQuery'></span></label>
                         </div>
                     </div>
                 </div>
             </li>
-            <li class="list-group-item" `style="border: 0">
-                <p class="list-group-item-text alert" id="submitResult"></p></i>
+            <li class="list-group-item" style="border: 0">
+                <p class="list-group-item-text alert" id="submitResult"></p>
             </li>
         </div>
     </div>

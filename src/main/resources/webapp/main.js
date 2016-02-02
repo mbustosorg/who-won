@@ -20,6 +20,80 @@
 $(document).ready(function() {
     var loadingTimestamp = 0;
 
+	var video = document.getElementById("snapVideo"),
+		videoObj = { "video": true },
+		errBack = function(error) {
+			console.log("Video capture error: ", error.code);
+		};
+
+	// Put video listeners into place
+	if(navigator.getUserMedia) { // Standard
+		navigator.getUserMedia(videoObj, function(stream) {
+			video.src = stream;
+			video.play();
+		}, errBack);
+	} else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
+		navigator.webkitGetUserMedia(videoObj, function(stream){
+			video.src = window.URL.createObjectURL(stream);
+			video.play();
+		}, errBack);
+	}
+	else if(navigator.mozGetUserMedia) { // Firefox-prefixed
+		navigator.mozGetUserMedia(videoObj, function(stream){
+			video.src = window.URL.createObjectURL(stream);
+			video.play();
+		}, errBack);
+	}
+    $('#snapButton').click(function() {
+        $('#snapVideo').addClass('hide');
+        var newCanvas = document.createElement("canvas");
+        newCanvas.width = video.videoWidth;
+        newCanvas.height = video.videoHeight;
+        newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
+        var img = new Image();
+        img.src = newCanvas.toDataURL();
+        img.id = 'snapImage';
+        $('#photoPage').prepend(img);
+        Caman("#snapImage", function () {
+          this.greyscale();
+          this.render();
+        });
+
+//        var img = document.createElement("img");
+//        img.src = canvas.toDataURL();
+ //       $('#snapCanvas').append(img);
+//        $('#photoPage').append(
+//            '<img id="testSnapImage" src="' + canvas.toDataURL() + '"></img>');
+
+        //        var canvas = document.getElementById("snapCanvas");
+//        var dataURL = canvas.toDataURL("image/png");
+//        $.ajax({
+//            type: "POST",
+//            url: '/ticket/',
+//            dataType: 'json',
+//            data: dataURL
+//        }).done(function(results) {
+//        }).error(function(results) {
+//        });
+    });
+    $('#snapRetakeButton').click(function() {
+        $('#snapImage').remove();
+        $('#snapVideo').removeClass('hide');
+    });
+
+    $('#straightBetNav').click(function() {
+        $('#manualEntryTab').removeClass('hide');
+        $('#photoPage').addClass('hide');
+    });
+    $('#moneyLineBetNav').click(function() {
+        $('#manualEntryTab').removeClass('hide');
+        $('#photoPage').addClass('hide');
+    });
+    $('#scanBetNav').click(function() {
+        $('#manualEntryTab').addClass('hide');
+        $('#photoPage').removeClass('hide');
+    });
+
     $('#betSubmit').click(function() {
         submitBet();
     });
