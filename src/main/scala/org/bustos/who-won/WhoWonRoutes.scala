@@ -175,6 +175,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         val future = whoWonData ? BetsRequest(userName, year)
         future onSuccess {
           case Bets(list) => ctx.complete(list.toJson.toString)
+          case UnknownPlayer => ctx.complete(400, "Unknown Player")
         }
       }
     }

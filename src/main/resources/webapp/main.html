@@ -79,21 +79,24 @@
                     </div>
                 </div>
                 <div id='photoPage' class='hide'>
-                    <video id="snapVideo" width="640" height="480" autoplay></video>
-                    <button id="snapButton">Snap</button>
-                    <button id="snapRetakeButton">Retake</button>
+                    <div id='desktopPhoto' class='hide'>
+                        <video id="snapVideo" width="640" height="480"></video>
+                    </div>
+                    <div id='mobilePhoto' class='hide'>
+                        <input type="file" accept="image/*">
+                    </div>
+                    <div class="btn-group col-md-offset-4">
+                        <button id="snapButton" class="btn btn-default" style="width: 100px;">Snap</button>
+                        <button id="snapRetakeButton" class="btn btn-default" style="width: 100px;">Retake</button>
+                    </div>
                 </div>
             </li>
             <li class="list-group-item" style="border: 0">
-                <div class="form-horizontal">
-                    <div class="form-group">
-                        <div class="col-lg-offset-4 col-lg-2">
-                            <button type="submit" class="btn btn-default" id="betSubmit">Submit</button>
-                        </div>
-                        <div class="col-lg-6">
-                            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin' id='runningQuery'></span></label>
-                        </div>
-                    </div>
+                <div class="btn-group col-md-offset-4">
+                    <button type="submit" class="btn btn-default" id="betSubmit" style="width: 100px;">Submit</button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-default" style="width: 50px; border: 0;"><span class='glyphicon glyphicon-refresh glyphicon-spin' id='runningQuery'></span></button>
                 </div>
             </li>
             <li class="list-group-item" style="border: 0">

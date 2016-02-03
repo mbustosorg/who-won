@@ -153,7 +153,6 @@ class WhoWonData extends Actor with ActorLogging {
       }
       sender ! "success"
     }
-
     case GameResultsRequest(year) => {
       val gameResults = db.withSession { implicit session =>
         (for {

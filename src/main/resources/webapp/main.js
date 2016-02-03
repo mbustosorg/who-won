@@ -18,34 +18,59 @@
 */
 
 $(document).ready(function() {
+
+    var iphone = false;
+    if((navigator.userAgent.match(/iPhone/i)) || (navigator.userAgent.match(/iPod/i))) {
+        if (document.cookie.indexOf("iphone_redirect=false") == -1) {
+            iphone = true;
+        }
+    }
+    if (iphone) $('#mobilePhoto').removeClass('hide');
+    else $('#desktopPhoto').removeClass('hide');
+
     var loadingTimestamp = 0;
 
-	var video = document.getElementById("snapVideo"),
-		videoObj = { "video": true },
-		errBack = function(error) {
-			console.log("Video capture error: ", error.code);
-		};
+	var video = document.getElementById("snapVideo");
+    var videoObj = { video: true };
+    var videoAudioObj = { video: true, audio: true };
+    var webcamStream = null;
 
-	// Put video listeners into place
-	if(navigator.getUserMedia) { // Standard
-		navigator.getUserMedia(videoObj, function(stream) {
-			video.src = stream;
-			video.play();
-		}, errBack);
-	} else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
-		navigator.webkitGetUserMedia(videoObj, function(stream){
-			video.src = window.URL.createObjectURL(stream);
-			video.play();
-		}, errBack);
-	}
-	else if(navigator.mozGetUserMedia) { // Firefox-prefixed
-		navigator.mozGetUserMedia(videoObj, function(stream){
-			video.src = window.URL.createObjectURL(stream);
-			video.play();
-		}, errBack);
-	}
+    function startVideo() {
+        if (webcamStream == null) {
+            errBack = function(error) {
+                console.log("Video capture error: ", error.code);
+            };
+            if(navigator.getUserMedia) { // Standard
+                navigator.getUserMedia(videoObj, function(stream) {
+                    webcamStream = stream;
+                    video.src = stream;
+                    video.play();
+                }, errBack);
+            } else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
+                navigator.webkitGetUserMedia(videoObj, function(stream){
+                    webcamStream = stream;
+                    video.src = window.URL.createObjectURL(stream);
+                    video.play();
+                }, errBack);
+            }
+            else if(navigator.mozGetUserMedia) { // Firefox-prefixed
+                navigator.mozGetUserMedia(videoObj, function(stream){
+                    webcamStream = stream;
+                    video.src = window.URL.createObjectURL(stream);
+                    video.play();
+                }, errBack);
+            }
+        }
+    }
+
+    function stopVideo() {
+        webcamStream.getTracks()[0].stop();
+        webcamStream = null;
+    }
+
     $('#snapButton').click(function() {
-        $('#snapVideo').addClass('hide');
+        $('video').addClass('hide');
+        stopVideo();
         var newCanvas = document.createElement("canvas");
         newCanvas.width = video.videoWidth;
         newCanvas.height = video.videoHeight;
@@ -78,20 +103,24 @@ $(document).ready(function() {
     });
     $('#snapRetakeButton').click(function() {
         $('#snapImage').remove();
-        $('#snapVideo').removeClass('hide');
+        $('video').removeClass('hide');
+        startVideo();
     });
 
     $('#straightBetNav').click(function() {
         $('#manualEntryTab').removeClass('hide');
         $('#photoPage').addClass('hide');
+        stopVideo();
     });
     $('#moneyLineBetNav').click(function() {
         $('#manualEntryTab').removeClass('hide');
         $('#photoPage').addClass('hide');
+        stopVideo();
     });
     $('#scanBetNav').click(function() {
         $('#manualEntryTab').addClass('hide');
         $('#photoPage').removeClass('hide');
+        startVideo();
     });
 
     $('#betSubmit').click(function() {
