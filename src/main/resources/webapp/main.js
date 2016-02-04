@@ -64,8 +64,10 @@ $(document).ready(function() {
     }
 
     function stopVideo() {
-        webcamStream.getTracks()[0].stop();
-        webcamStream = null;
+        if (webcamStream != null) {
+            webcamStream.getTracks()[0].stop();
+            webcamStream = null;
+        }
     }
 
     $('#snapButton').click(function() {
@@ -81,31 +83,30 @@ $(document).ready(function() {
         $('#photoPage').prepend(img);
         Caman("#snapImage", function () {
           this.greyscale();
+          this.clip(40);
+          this.sharpen(10);
           this.render();
         });
-
-//        var img = document.createElement("img");
-//        img.src = canvas.toDataURL();
- //       $('#snapCanvas').append(img);
-//        $('#photoPage').append(
-//            '<img id="testSnapImage" src="' + canvas.toDataURL() + '"></img>');
-
-        //        var canvas = document.getElementById("snapCanvas");
-//        var dataURL = canvas.toDataURL("image/png");
-//        $.ajax({
-//            type: "POST",
-//            url: '/ticket/',
-//            dataType: 'json',
-//            data: dataURL
-//        }).done(function(results) {
-//        }).error(function(results) {
-//        });
     });
+
     $('#snapRetakeButton').click(function() {
         $('#snapImage').remove();
         $('video').removeClass('hide');
         startVideo();
     });
+
+    $('#mobileInputPhoto').change = function () {
+      if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          $('#mobilePhotoImage')
+            .attr('src', e.target.result)
+            .width(150)
+            .height(200);
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
 
     $('#straightBetNav').click(function() {
         $('#manualEntryTab').removeClass('hide');
@@ -124,6 +125,20 @@ $(document).ready(function() {
     });
 
     $('#betSubmit').click(function() {
+        if ($('#photoPage').hasClass('hide')) submitBet();
+        else {
+            var canvas = document.getElementById("snapImage");
+            var imgData = canvas.toDataURL();
+            $.ajax({
+                type: "POST",
+                url: '/ticket/',
+                dataType: 'json',
+                data: imgData
+            }).done(function(results) {
+            }).error(function(results) {
+            });
+        }
+
         submitBet();
     });
     $('#entryPageNav').click(function() {

@@ -19,10 +19,13 @@
 
 package org.bustos.whowon
 
+import java.io.{FileOutputStream, File}
+
 import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
+import sun.misc.BASE64Decoder
 import scala.collection.immutable.Iterable
 import scala.util.Properties.envOrElse
 import scala.slick.driver.MySQLDriver.simple._
@@ -33,8 +36,10 @@ import spray.json._
 object WhoWonData {
 
   val quarterMile = 1.0 / 60.0 / 4.0 // In degrees
+  val TicketImageDestination = "src/main/resources/webapp/tickets/"
   val WestCoastId = "America/Los_Angeles"
   val hhmmssFormatter = DateTimeFormat.forPattern("hh:mm:ss a")
+  val filedateFormatter = DateTimeFormat.forPattern("yyyymmddhhmmss")
 
   val db = {
     val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon")
@@ -207,6 +212,18 @@ class WhoWonData extends Actor with ActorLogging {
       }
       if (player.isEmpty) sender ! UnknownPlayer
       else sender ! player.head
+    }
+    case TicketImage(name, image) => {
+      val decodedString = image.decodeString("ISO_8859_1").split(',').tail.head
+      val directory = new File(TicketImageDestination + name)
+      if (!directory.exists) directory.mkdir
+      val dateString = filedateFormatter.print(new DateTime)
+      val decodedFile = new File(TicketImageDestination + name + "/ticket_" + dateString + ".png")
+      val decoded = new BASE64Decoder().decodeBuffer(decodedString)
+      val decodedStream = new FileOutputStream(decodedFile)
+      decodedStream.write(decoded)
+      decodedStream.close()
+      sender ! "tickets/" + name + "/ticket_" + dateString + ".png"
     }
   }
 }

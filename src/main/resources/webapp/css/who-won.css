@@ -22,3 +22,7 @@
         transform: rotate(359deg);
     }
 }
+
+input {
+    font-size: 16px;
+}

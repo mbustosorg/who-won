@@ -19,32 +19,23 @@
 
 package org.bustos.whowon
 
-import java.io.{FileOutputStream, File, ByteArrayInputStream}
-import javax.imageio.ImageIO
 import javax.ws.rs.Path
 
 import akka.actor._
 import akka.pattern.ask
-import akka.util.{ByteString, Timeout}
-import sun.misc.BASE64Decoder
-import scala.concurrent.Future
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.annotations._
 import com.wordnik.swagger.model.ApiInfo
-import org.bustos.whowon.WhoWonData._
+import org.bustos.whowon.WhoWonJsonProtocol._
+import org.bustos.whowon.WhoWonTables._
 import org.slf4j.LoggerFactory
-import spray.http.DateTime
-import spray.http.{DateTime, HttpCookie}
 import spray.http.MediaTypes._
+import spray.http.StatusCodes._
+import spray.http.{DateTime, HttpCookie}
 import spray.json._
 import spray.routing._
 
-import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
-import WhoWonTables._
-import WhoWonJsonProtocol._
-import spray.json._
-import spray.http.StatusCodes._
 
 class WhoWonServiceActor extends HttpServiceActor with ActorLogging {
 
@@ -74,8 +65,9 @@ class WhoWonServiceActor extends HttpServiceActor with ActorLogging {
 @Api(value = "/", description = "Primary Interface", produces = "application/json")
 trait WhoWonRoutes extends HttpService with UserAuthentication {
 
-  import UserAuthentication._
   import java.net.InetAddress
+
+  import UserAuthentication._
 
   val logger = LoggerFactory.getLogger(getClass)
   val system = ActorSystem("whoWonSystem")
@@ -203,25 +195,21 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   @ApiResponses(Array())
   def saveTicket = post {
     pathPrefix("ticket") {
-      respondWithMediaType(`application/json`) { ctx =>
-        ctx.request.entity.data.toByteString match {
-          case x: ByteString => {
-            val decodedString = x.decodeString("ISO_8859_1").split(',').tail.head
-            val decodedFile = new File("test.png")
-            val decoded = new BASE64Decoder().decodeBuffer(decodedString)
-            val decodedStream = new FileOutputStream(decodedFile)
-            decodedStream.write(decoded)
-            decodedStream.close()
-          }
-        }
-        ctx.complete("")
-//        val future = whoWonData ? ""
-//        future onSuccess {
-//          case x: String =>
-//        }
-      }
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          handleRejections(authorizationRejection) {
+            authenticate(authenticateSessionId(sessionId.content, username.content)) { authentication =>
+              respondWithMediaType(`application/json`) { ctx =>
+                val future = whoWonData ? TicketImage(username.content, ctx.request.entity.data.toByteString)
+                future onSuccess {
+                  case location: String => ctx.complete(location)
+                  case _ => ctx.complete(400, "Error storing image")
+                }
+              }}
+          }}
+        }}
+      }} ~ getFromResource("webapp/login.html")
     }
-  }
 
   @Path("games/{year}")
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all game results for year")

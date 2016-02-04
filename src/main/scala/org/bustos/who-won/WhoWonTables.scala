@@ -19,6 +19,7 @@
 
 package org.bustos.whowon
 
+import akka.util.ByteString
 import org.joda.time._
 import java.sql.Timestamp
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, DateTimeFormatter}
@@ -50,6 +51,7 @@ object WhoWonTables {
   case class WinningsTrackRequest(year: Int)
   case class PlayerWinnings(userName: String, winnings: List[Double], percentage: List[Double])
   case class WinningsTrack(timestamps: List[DateTime], list: List[PlayerWinnings])
+  case class TicketImage(userName: String, image: ByteString)
   // Error case classes
   case class UnknownPlayer()
   case class UnknownBookId()
