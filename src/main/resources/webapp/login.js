@@ -19,7 +19,7 @@
 
 $(document).ready(function() {
   $("form#loginForm").submit(function() {
-    var username = $('#inputName').val().toLowerCase();
+    var username = $('#inputName').val().toLowerCase().trim();
     var password = $('#inputPassword').val();
     $("#loggingIn").removeClass('hide');
     if (username && password) {

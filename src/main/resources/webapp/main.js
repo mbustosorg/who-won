@@ -25,8 +25,12 @@ $(document).ready(function() {
             iphone = true;
         }
     }
-    if (iphone) $('#mobilePhoto').removeClass('hide');
-    else $('#desktopPhoto').removeClass('hide');
+    if (iphone) {
+        $('#mobilePhoto').removeClass('hide');
+    } else {
+        $('#desktopPhoto').removeClass('hide');
+        $('#snapButtons').removeClass('hide');
+    }
 
     var loadingTimestamp = 0;
 
@@ -81,13 +85,19 @@ $(document).ready(function() {
         img.src = newCanvas.toDataURL();
         img.id = 'snapImage';
         $('#photoPage').prepend(img);
+        $('#snapImage').attr('data-camanwidth','500');
+        $('#snapImage').css('width', '500px');
+        imageProcess();
+    });
+
+    function imageProcess() {
         Caman("#snapImage", function () {
           this.greyscale();
           this.clip(40);
           this.sharpen(10);
           this.render();
         });
-    });
+    }
 
     $('#snapRetakeButton').click(function() {
         $('#snapImage').remove();
@@ -95,18 +105,20 @@ $(document).ready(function() {
         startVideo();
     });
 
-    $('#mobileInputPhoto').change = function () {
-      if (input.files && input.files[0]) {
+    $('#mobileInputPhoto').change(function () {
+      if (this.files && this.files[0]) {
         var reader = new FileReader();
         reader.onload = function (e) {
-          $('#mobilePhotoImage')
-            .attr('src', e.target.result)
-            .width(150)
-            .height(200);
+            if ($('#snapImage') != null) $('#snapImage').remove();
+            var img = new Image();
+            img.src = e.target.result;
+            img.id = 'snapImage';
+            $('#photoPage').prepend(img);
+            imageProcess();
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(this.files[0]);
       }
-    }
+    });
 
     $('#straightBetNav').click(function() {
         $('#manualEntryTab').removeClass('hide');
@@ -127,19 +139,15 @@ $(document).ready(function() {
     $('#betSubmit').click(function() {
         if ($('#photoPage').hasClass('hide')) submitBet();
         else {
-            var canvas = document.getElementById("snapImage");
-            var imgData = canvas.toDataURL();
             $.ajax({
                 type: "POST",
                 url: '/ticket/',
                 dataType: 'json',
-                data: imgData
+                data: $('#snapImage').attr('src')
             }).done(function(results) {
             }).error(function(results) {
             });
         }
-
-        submitBet();
     });
     $('#entryPageNav').click(function() {
         $('#betEntry').removeClass('hide');
@@ -367,19 +375,19 @@ $(document).ready(function() {
          if (results.responseText == 'Unknown Player') {
             $('#submitResult').addClass('alert-danger');
             $('#submitResult').removeClass('alert-success');
-            $('#submitResult').html('<strong>   Error: </strong> Unknown Player');
+            $('#submitResult').html('<strong>Unknown Player</strong>');
          } else if (results.responseText == 'Unknown BookId') {
             $('#submitResult').addClass('alert-danger');
             $('#submitResult').removeClass('alert-success');
-            $('#submitResult').html('<strong>   Error: </strong> Unknown BookId ' + bookId);
+            $('#submitResult').html('<strong>Unknown BookId</strong>');
          } else if (results.responseText == 'Bet Submitted') {
             $('#submitResult').addClass('alert-success');
             $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>   Submitted ' + betType + ' bet</strong> for '+ bookId);
+            $('#submitResult').html('<strong>Submitted</strong>');
          } else if (results.responseText == 'Bet Replaced') {
             $('#submitResult').addClass('alert-success');
             $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>   Replaced previous ' + betType + ' bet </strong> for '+ bookId);
+            $('#submitResult').html('<strong>Replaced previous</strong>');
          }
     };
 

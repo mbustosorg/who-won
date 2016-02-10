@@ -36,8 +36,8 @@
     </div>
 </nav>
 <div class="container-fluid">
-    <div class="list-group col-sm-4">
-        <div id="betEntry">
+    <div class="list-group col-sm-4" id='betEntry'>
+        <div>
             <ul class="nav nav-tabs">
                 <li id='straightBetNav' class="active"><a data-toggle="tab" href="#straightPane">Straight</a></li>
                 <li id='moneyLineBetNav'><a data-toggle="tab" href="#moneylinePane">Money Line</a></li>
@@ -79,16 +79,19 @@
                     </div>
                 </div>
                 <div id='photoPage' class='hide'>
-                    <div id='desktopPhoto' class='hide'>
-                        <video id="snapVideo" width="640" height="480"></video>
+                    <div class="form-group">
+                        <div id='desktopPhoto' class='hide'>
+                            <video id="snapVideo" width="500"></video>
+                        </div>
+                        <div id='mobilePhoto' class='hide'>
+                            <input id='mobileInputPhoto' type="file" accept="image/*">
+                        </div>
                     </div>
-                    <div id='mobilePhoto' class='hide'>
-                        <img id="mobilePhotoImage"/>
-                        <input id='mobileInputPhoto' type="file" accept="image/*">
-                    </div>
-                    <div class="btn-group col-md-offset-4">
-                        <button id="snapButton" class="btn btn-default" style="width: 100px;">Snap</button>
-                        <button id="snapRetakeButton" class="btn btn-default" style="width: 100px;">Retake</button>
+                    <div class="form-group hide" id='snapButtons'>
+                        <div class="btn-group col-md-offset-4">
+                            <button id="snapButton" class="btn btn-default" style="width: 100px;">Snap</button>
+                            <button id="snapRetakeButton" class="btn btn-default" style="width: 100px;">Retake</button>
+                        </div>
                     </div>
                 </div>
             </li>
@@ -99,9 +102,7 @@
                 <div class="btn-group">
                     <button class="btn btn-default" style="width: 50px; border: 0;"><span class='glyphicon glyphicon-refresh glyphicon-spin' id='runningQuery'></span></button>
                 </div>
-            </li>
-            <li class="list-group-item" style="border: 0">
-                <p class="list-group-item-text alert" id="submitResult"></p>
+                <p class="alert" id="submitResult"></p>
             </li>
         </div>
     </div>
