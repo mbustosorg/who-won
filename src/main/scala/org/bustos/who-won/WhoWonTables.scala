@@ -49,7 +49,7 @@ object WhoWonTables {
   case class BookIdsRequest(year: Int)
   case class BookIdsResults(list: List[Bracket])
   case class WinningsTrackRequest(year: Int)
-  case class PlayerWinnings(userName: String, winnings: List[Double], percentage: List[Double])
+  case class PlayerWinnings(userName: String, winnings: List[Double], percentage: List[Int])
   case class WinningsTrack(timestamps: List[DateTime], list: List[PlayerWinnings])
   case class TicketImage(userName: String, image: ByteString)
   // Error case classes
@@ -78,7 +78,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   import WhoWonTables._
 
   implicit object DateJsonFormat extends RootJsonFormat[DateTime] {
-    private val parserISO: DateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis();
+    private val parserISO: DateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis()
     override def write(obj: DateTime) = JsString(parserISO.print(obj))
     override def read(json: JsValue) : DateTime = json match {
       case JsString(s) => parserISO.parseDateTime(s)

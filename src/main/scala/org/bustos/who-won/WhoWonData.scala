@@ -60,21 +60,21 @@ class WhoWonData extends Actor with ActorLogging {
   implicit val defaultTimeout = Timeout(1 seconds)
 
   val players = {
-    (db.withSession { implicit session =>
+    db.withSession { implicit session =>
       playersTable.list
-    }).map({ x => (x.userName, x)}).toMap
+    }.map({ x => (x.userName, x)}).toMap
   }
 
   val playersById = {
-    (db.withSession { implicit session =>
+    db.withSession { implicit session =>
       playersTable.list
-    }).map({ x => (x.id, x)}).toMap
+    }.map({ x => (x.id, x)}).toMap
   }
 
   val bookIds = {
-    (db.withSession { implicit session =>
+    db.withSession { implicit session =>
       bracketsTable.list
-    }).map({ x =>
+    }.map({ x =>
       ((x.bookId, x.year), x)
     }).toMap
   }
@@ -87,50 +87,48 @@ class WhoWonData extends Actor with ActorLogging {
 
   def userNameFromPlayerId(id: Int): String = playersById(id).userName
 
-  def betResult(bet: Bet): BetDisplay = {
-    val gameResult = db.withSession { implicit session =>
-      resultsTable.filter({ x => x.year === x.year && x.bookId === bet.bookId }).list
-    }
+  def betResult(bet: Bet, gameResult: Option[GameResult]): BetDisplay = {
     val bracket = bookIds((bet.bookId, bet.year))
-    if (gameResult.isEmpty) {
-      BetDisplay(bet, bracket, (0.0).toDouble, "Not yet")
-    } else {
-      val result = gameResult.head
-      val score = {
-        if (bet.betType == StraightBet) {
-          result.score - result.opposingScore + bet.spread_ml
-        } else {
-          result.score - result.opposingScore + bet.spread_ml
-        }
-      }
-      val resultType = {
-        if (score > 0) "Win"
-        else if (score < 0) "Lose"
-        else "Push"
-      }
-      val winnings = {
-        if (bet.betType == StraightBet) {
-          bet.amount + bet.amount * StraightBetPayoff
-        } else {
-          if (bet.spread_ml >= 100.0) {
-            bet.amount + bet.amount * (bet.spread_ml / 100.0)
+    gameResult match {
+      case Some(result) =>
+        val score = {
+          if (bet.betType == StraightBet) {
+            result.score - result.opposingScore + bet.spread_ml
           } else {
-            bet.amount + bet.amount * (1.0 / (bet.spread_ml / 100.0))
+            result.score - result.opposingScore + bet.spread_ml
           }
         }
-      }
-      BetDisplay(bet, bracket, winnings.toDouble, resultType)
+        val resultType = {
+          if (score > 0) "Win"
+          else if (score < 0) "Lose"
+          else "Push"
+        }
+        val winnings = {
+          if (bet.betType == StraightBet) {
+            if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
+            else if (resultType == "Lose") 0.0
+            else bet.amount
+          } else {
+            if (bet.spread_ml >= 100.0) {
+              bet.amount + bet.amount * (bet.spread_ml / 100.0)
+            } else {
+              bet.amount + bet.amount * (1.0 / (bet.spread_ml / 100.0))
+            }
+          }
+        }
+        BetDisplay(bet, bracket, winnings.toDouble, resultType)
+      case None => BetDisplay(bet, bracket, 0.0, "Not yet")
     }
   }
 
   def receive = {
-    case bet: Bet => {
+    case bet: Bet =>
       if (!validPlayer(bet.userName)) sender ! UnknownPlayer
       else if (!validBookId(bet.bookId, bet.year)) sender ! UnknownBookId
       else {
         val message = db.withSession { implicit session =>
           val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).list
-          if (!previousBet.isEmpty) {
+          if (previousBet.nonEmpty) {
             betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).delete
             betsTable += bet
             BetReplaced
@@ -141,24 +139,20 @@ class WhoWonData extends Actor with ActorLogging {
         }
         sender ! message
       }
-    }
-    case BetsRequest(userName, year) => {
+    case BetsRequest(userName, year) =>
       if (validPlayer(userName)) {
+        val gameResults = db.withSession { implicit session =>
+          resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
+        }
         val bets = db.withSession { implicit session =>
           betsTable.filter({ x => x.userName === userName && x.year === year }).list
         }.map({ bet =>
-          betResult(bet)
+          if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
+          else betResult(bet, None)
         })
         sender ! Bets(bets)
       } else sender ! UnknownPlayer
-    }
-    case x: GameResult => {
-      db.withSession { implicit session =>
-        resultsTable += x
-      }
-      sender ! "success"
-    }
-    case GameResultsRequest(year) => {
+    case GameResultsRequest(year) =>
       val gameResults = db.withSession { implicit session =>
         (for {
           c <- bracketsTable if c.year === year
@@ -170,8 +164,7 @@ class WhoWonData extends Actor with ActorLogging {
           .map({ x => GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9) })
       }
       sender ! GameResults(gameResults)
-    }
-    case WinningsTrackRequest(year) => {
+    case WinningsTrackRequest(year) =>
       val gameResults = db.withSession { implicit session =>
         resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
       }
@@ -184,36 +177,34 @@ class WhoWonData extends Actor with ActorLogging {
       val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
       val timestamps = { new DateTime(resultsTimestamps.head).plusMinutes(-15) } :: resultsTimestamps
       val acc = bets.map({ case (k, v) =>
+        var outlay = -outlays(k).get
         (k, timestamps.map({ timestamp =>
-          v.foldLeft((-outlays(k).get, 0.0, 0))({ (acc, x) =>
+          v.foldLeft((outlay, 0.0, 0))({ (acc, x) =>
             if (gameResults.contains(x.bookId)) {
               val game = gameResults(x.bookId)
               if (game.resultTimeStamp.getMillis <= timestamp.getMillis) {
-                val payoff = betResult(x).payoff
+                val payoff = betResult(x, Some(game)).payoff
                 val win = if (payoff > 0.0) 1 else 0
-                (acc._1 + payoff, (acc._2 * acc._3 + win) / (acc._3 + 1), acc._3 + 1)
+                (acc._1 + payoff, acc._2 + win, acc._3 + 1)
               } else acc
             } else acc
           })
         }))
-      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1}), v.map({ x => x._2}))})
+      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1}), v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}))})
       val tracking = WinningsTrack(timestamps, acc.toList)
       sender ! tracking
-    }
-    case BookIdsRequest(year) => {
+    case BookIdsRequest(year) =>
       val bookIdResults = db.withSession { implicit session =>
         bracketsTable.filter(_.year === year).list
       }
       sender ! BookIdsResults(bookIdResults)
-    }
-    case PlayerIdRequest(name) => {
+    case PlayerIdRequest(name) =>
       val player = db.withSession { implicit session =>
         playersTable.filter(_.userName === name).list
       }
       if (player.isEmpty) sender ! UnknownPlayer
       else sender ! player.head
-    }
-    case TicketImage(name, image) => {
+    case TicketImage(name, image) =>
       val decodedString = image.decodeString("ISO_8859_1").split(',').tail.head
       val directory = new File(TicketImageDestination + name)
       if (!directory.exists) directory.mkdir
@@ -224,6 +215,5 @@ class WhoWonData extends Actor with ActorLogging {
       decodedStream.write(decoded)
       decodedStream.close()
       sender ! "tickets/" + name + "/ticket_" + dateString + ".png"
-    }
   }
 }
