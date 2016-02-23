@@ -193,7 +193,7 @@ $(document).ready(function() {
                 var options = {
                   title: 'Net Winnings',
                   legend: { position: 'bottom' },
-                  chartArea: { left: 40, top: 10, width: '90%', height: '80%'},
+                  chartArea: { left: 60, top: 10, width: '90%', height: '80%'},
                   hAxis: {
                     title: 'Time',
                     gridlines: {
@@ -220,7 +220,7 @@ $(document).ready(function() {
                 var options = {
                   title: 'Percentage Won',
                   legend: { position: 'bottom' },
-                  chartArea: { left: 40, top: 10, width: '90%', height: '80%'},
+                  chartArea: { left: 60, top: 10, width: '90%', height: '80%'},
                   hAxis: {
                     title: 'Time',
                     gridlines: {
