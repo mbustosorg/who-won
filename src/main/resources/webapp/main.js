@@ -286,7 +286,7 @@ $(document).ready(function() {
 			    currentWinnings += Number(currentBet.payoff);
                 var bgcolor = '#FFFFFF';
                 if (currentBet.resultString == 'Lose') bgcolor = '#FF0017';
-                else if (currentBet.resultString == 'Win') bgcolor = '#FFD80D';
+                else if (currentBet.resultString == 'Win') bgcolor = '#6DFF6C';
 				$('#bets_table_body').append(
                     '<tr id="bets' + currentBet.bet.bookId + '">' +
 					'<td>' + currentBet.bet.bookId + '</td>' +
