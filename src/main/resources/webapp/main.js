@@ -191,7 +191,7 @@ $(document).ready(function() {
                   pctData.addRow(pctRow);
                 }
                 var options = {
-                  title: 'Net Winnings',
+                  title: 'Net Winnings ($ vs time)',
                   legend: { position: 'bottom' },
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
@@ -211,14 +211,13 @@ $(document).ready(function() {
                     }
                   },
                   vAxis: {
-                    title: '$',
                     minValue: 0
                   }
                 };
                 var chart = new google.visualization.LineChart(document.getElementById('winningsChart'));
                 chart.draw(data, options);
                 var options = {
-                  title: 'Percentage Won',
+                  title: 'Percentage Won (% vs time)',
                   legend: { position: 'bottom' },
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
@@ -238,7 +237,6 @@ $(document).ready(function() {
                     }
                   },
                   vAxis: {
-                    title: '%',
                     minValue: 0
                   }
                 };
