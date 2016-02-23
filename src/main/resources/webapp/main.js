@@ -140,15 +140,27 @@ $(document).ready(function() {
     $('#entryPageNav').click(function() {
         $('#betEntry').removeClass('hide');
         $('#report').addClass('hide');
+        $('#admin').addClass('hide');
         $('#entryPageNav').addClass('active');
         $('#reportPageNav').removeClass('active');
+        $('#adminPageNav').removeClass('active');
     });
     $('#reportPageNav').click(function() {
-        $('#report').removeClass('hide');
         $('#betEntry').addClass('hide');
-        $('#reportPageNav').addClass('active');
+        $('#report').removeClass('hide');
+        $('#admin').addClass('hide');
         $('#entryPageNav').removeClass('active');
+        $('#reportPageNav').addClass('active');
+        $('#adminPageNav').removeClass('active');
         updateWinnings();
+    });
+    $('#adminPageNav').click(function() {
+        $('#report').addClass('hide');
+        $('#betEntry').addClass('hide');
+        $('#admin').removeClass('hide');
+        $('#reportPageNav').removeClass('active');
+        $('#entryPageNav').removeClass('active');
+        $('#adminPageNav').addClass('active');
     });
 
     function updateWinnings() {
