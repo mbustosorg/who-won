@@ -32,7 +32,11 @@ $(document).ready(function() {
         $('#snapButtons').removeClass('hide');
     }
 
-    var loadingTimestamp = 0;
+    function year() {
+        var year = (new Date()).getFullYear();
+        year = 2015;
+        return year;
+    }
 
 	var video = document.getElementById("snapVideo");
     var videoObj = { video: true };
@@ -124,19 +128,6 @@ $(document).ready(function() {
         startVideo();
     });
 
-    $('#betSubmit').click(function() {
-        if ($('#photoPage').hasClass('hide')) submitBet();
-        else {
-            $.ajax({
-                type: "POST",
-                url: '/ticket/',
-                dataType: 'json',
-                data: $('#snapImage').attr('src')
-            }).done(function(results) {
-            }).error(function(results) {
-            });
-        }
-    });
     $('#entryPageNav').click(function() {
         $('#betEntry').removeClass('hide');
         $('#report').addClass('hide');
@@ -161,15 +152,46 @@ $(document).ready(function() {
         $('#reportPageNav').removeClass('active');
         $('#entryPageNav').removeClass('active');
         $('#adminPageNav').addClass('active');
+        $('#resultsRunningQuery').removeClass('hide');
+        updateMissingResults();
     });
+
+    function updateMissingResults() {
+        $.ajax({
+            url: '/games/' + year() + '/missing'
+        }).done(function(results) {
+            $('#resultsBookId').empty();
+            $('#resultsOpposingBookId').empty();
+            $.each(results, function(key, currentGame) {
+                var labelString = currentGame.bookId + ' - ' + currentGame.teamName;
+                $('#resultsBookId').append(
+                    '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                );
+                $('#resultsOpposingBookId').append(
+                    '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                );
+            });
+            $('#selectedScore').empty();
+            $('#selectedScore').append('<option value =\"0\">0</option>');
+            $('#opposingScore').empty();
+            $('#opposingScore').append('<option value =\"0\">0</option>');
+            for (i = 20; i < 150; i = i + 1) {
+                $('#selectedScore').append(
+                    '<option value =\"' + i + '\">' + i + '</option>'
+                );
+                $('#opposingScore').append(
+                    '<option value =\"' + i + '\">' + i + '</option>'
+                );
+            }
+            $('#resultsRunningQuery').addClass('hide');
+        });
+}
 
     function updateWinnings() {
         if (!$('#report').hasClass('hide')) {
             $('#reportQuery').removeClass('hide');
-            var year = loadingTimestamp.getFullYear();
-            year = 2015;
             $.ajax({
-                url: '/winnings/' + year,
+                url: '/winnings/' + year(),
                 cache: false
             }).done(function(results) {
                 var data = new google.visualization.DataTable();
@@ -248,15 +270,51 @@ $(document).ready(function() {
         }
     };
 
+    $('#betSubmit').click(function() {
+        if ($('#photoPage').hasClass('hide')) submitBet();
+        else {
+            $.ajax({
+                type: "POST",
+                url: '/ticket/',
+                dataType: 'json',
+                data: $('#snapImage').attr('src')
+            }).done(function(results) {
+            });
+        }
+    });
+
+    $('#resultsSubmit').click(function() {
+        var bookId = $('#resultsBookId').val().split(' ')[0];
+        var selectedScore = $('#selectedScore').val();
+        var opposingBookId = $('#resultsOpposingBookId').val().split(' ')[0];
+        var opposingScore = $('#opposingScore').val();
+        var timestamp = (new Date()).toISOString();
+        if (bookId == opposingBookId) {
+        } else {
+            $('#resultsRunningQuery').removeClass('hide');
+            var gameResult = '{\"year\": ' +
+                year() + ', \"bookId\": ' +
+                bookId + ', \"score\": ' + selectedScore + ', \"opposingBookId\": ' +
+                opposingBookId + ', \"opposingScore\": ' + opposingScore + ', \"resultTimeStamp\": \"' +
+                timestamp + '\"}';
+            $.ajax({
+                type: "POST",
+                url: '/games/' + year(),
+                dataType: 'json',
+                data: gameResult
+            }).done(function(results) {
+                $('#resultsRunningQuery').addClass('hide');
+                updateMissingResults();
+            });
+        }
+    });
+
     function submitBet() {
         $('#runningQuery').removeClass('hide');
         var bookId = $('#bookId').val().split(' ')[0];
         var spreadMlAmount = '0';
         var betAmount = $('#betAmount').val();
         var userName = getCookie("WHOWON_USER")
-        loadingTimestamp = new Date();
-        var year = loadingTimestamp.getFullYear();
-        year = 2015
         var betType = '';
         if ($('#moneylinePane').hasClass('active')) {
             betType = 'ML';
@@ -265,7 +323,7 @@ $(document).ready(function() {
             betType = 'ST';
             spreadMlAmount = $('#spreadAmount').val();
         }
-        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
+        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
         $.ajax({
             type: "POST",
             url: '/bets/',
@@ -283,11 +341,8 @@ $(document).ready(function() {
 
     function displayCurrentBets() {
         var userName = getCookie("WHOWON_USER")
-        loadingTimestamp = new Date();
-        var year = loadingTimestamp.getFullYear();
-        year = 2015;
 		$.ajax({
-			url: '/bets/' + userName + '/' + year,
+			url: '/bets/' + userName + '/' + year(),
 			cache: false
 		}).done (function (bets) {
 			$('tbody#bets_table_body').empty();
@@ -328,11 +383,8 @@ $(document).ready(function() {
     };
 
     function displayGameResults() {
-        loadingTimestamp = new Date();
-        var year = loadingTimestamp.getFullYear();
-        year = 2015;
 		$.ajax({
-			url: '/games/' + year,
+			url: '/games/' + year(),
 			cache: false
 		}).done (function (games) {
 			$('tbody#gamesLeft').empty();
@@ -411,11 +463,8 @@ $(document).ready(function() {
     };
 
     function populateBookIds() {
-        loadingTimestamp = new Date();
-        var year = loadingTimestamp.getFullYear();
-        year = 2015;
         $.ajax({
-            url: '/bookIds/' + year,
+            url: '/bookIds/' + year(),
             cache: false
         }).done(function(results) {
 			$('#bookId').empty();

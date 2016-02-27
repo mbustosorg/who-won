@@ -43,6 +43,7 @@ object WhoWonTables {
   case class BetsRequest(playerId: String, year: Int)
   case class Bets(list: List[BetDisplay])
   case class GameResultsRequest(year: Int)
+  case class MissingGameResultsRequest(year: Int)
   case class GameResultDisplay(favBookId: Int, undBookId: Int, favSeed: Int, undSeed: Int, favName: String, undName: String, favScore: Int, undScore: Int, timestamp: DateTime)
   case class GameResults(list: List[GameResultDisplay])
   case class PlayerIdRequest(userName: String)
@@ -55,8 +56,10 @@ object WhoWonTables {
   // Error case classes
   case class UnknownPlayer()
   case class UnknownBookId()
+  // Results case classes
   case class BetReplaced()
   case class BetSubmitted()
+  case class ResultSubmitted()
 
   val betsTable = TableQuery[BetsTable]
   val bracketsTable = TableQuery[BracketsTable]
@@ -79,9 +82,15 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
 
   implicit object DateJsonFormat extends RootJsonFormat[DateTime] {
     private val parserISO: DateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis()
+    private val parserMillisISO: DateTimeFormatter = ISODateTimeFormat.dateTime()
     override def write(obj: DateTime) = JsString(parserISO.print(obj))
     override def read(json: JsValue) : DateTime = json match {
-      case JsString(s) => parserISO.parseDateTime(s)
+      case JsString(s) =>
+        try {
+          parserISO.parseDateTime(s)
+        } catch {
+          case _: Throwable => parserMillisISO.parseDateTime(s)
+        }
       case _ => throw new DeserializationException("Error info you want here ...")
     }
   }

@@ -83,6 +83,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     betEntry ~
     bookIds ~
     gamesRequest ~
+    missingGamesRequest ~
     winnings ~
     saveTicket ~
     login
@@ -141,7 +142,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   ))
   @ApiResponses(Array())
   def postBet = post {
-    pathPrefix("bets") {
+    path("bets") {
       respondWithMediaType(`application/json`) { ctx =>
         val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
         val future = whoWonData ? newBet
@@ -173,28 +174,12 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     }
   }
 
-  @Path("games")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a game result")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
-  def postGameResult = post {
-    pathPrefix("games") {
-      respondWithMediaType(`application/json`) { ctx =>
-        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
-        val future = whoWonData ? newResult
-        future onSuccess {
-          case x: String => ctx.complete(x)
-        }
-      }
-    }
-  }
-
   @Path("ticket")
   @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a ticket image")
   @ApiImplicitParams(Array())
   @ApiResponses(Array())
   def saveTicket = post {
-    pathPrefix("ticket") {
+    path("ticket") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
           handleRejections(authorizationRejection) {
@@ -212,17 +197,53 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     }
 
   @Path("games/{year}")
+  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a game result")
+  @ApiImplicitParams(Array())
+  @ApiResponses(Array())
+  def postGameResult = post {
+    path("games" / IntNumber) { (year) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
+        val future = whoWonData ? newResult
+        future onSuccess {
+          case ResultSubmitted => ctx.complete("{\"ResultText\": \"Submitted\"}")
+          case _ => ctx.complete(500, "{``\"ResultText\": \"Problem Submitting\"}")
+        }
+      }
+    }
+  }
+
+  @Path("games/{year}")
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all game results for year")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
   ))
   @ApiResponses(Array())
   def gamesRequest = get {
-    pathPrefix("games" / IntNumber) { (year) =>
+    path("games" / IntNumber) { (year) =>
       respondWithMediaType(`application/json`) { ctx =>
         val future = whoWonData ? GameResultsRequest(year)
         future onSuccess {
           case GameResults(list) => {
+            ctx.complete(list.toJson.toString)
+          }
+        }
+      }
+    }
+  }
+
+  @Path("games/{year}/missing")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get games that don't yet have results")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
+  ))
+  @ApiResponses(Array())
+  def missingGamesRequest = get {
+    path("games" / IntNumber / "missing") { (year) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val future = whoWonData ? MissingGameResultsRequest(year)
+        future onSuccess {
+          case BookIdsResults(list) => {
             ctx.complete(list.toJson.toString)
           }
         }
@@ -237,7 +258,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   ))
   @ApiResponses(Array())
   def bookIds = get {
-    pathPrefix("bookIds" / IntNumber) { (year) =>
+    path("bookIds" / IntNumber) { (year) =>
       respondWithMediaType(`application/json`) { ctx =>
         val future = whoWonData ? BookIdsRequest(year)
         future onSuccess {
@@ -256,7 +277,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   ))
   @ApiResponses(Array())
   def winnings = get {
-    pathPrefix("winnings" / IntNumber) { (year) =>
+    path("winnings" / IntNumber) { (year) =>
       respondWithMediaType(`application/json`) { ctx =>
         val future = whoWonData ? WinningsTrackRequest(year)
         future onSuccess {

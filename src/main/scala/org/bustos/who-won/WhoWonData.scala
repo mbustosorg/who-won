@@ -26,6 +26,7 @@ import akka.util.Timeout
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import sun.misc.BASE64Decoder
+import sun.plugin.dom.exception.InvalidStateException
 import scala.collection.immutable.Iterable
 import scala.util.Properties.envOrElse
 import scala.slick.driver.MySQLDriver.simple._
@@ -152,6 +153,23 @@ class WhoWonData extends Actor with ActorLogging {
         })
         sender ! Bets(bets)
       } else sender ! UnknownPlayer
+    case result: GameResult =>
+      db.withSession { implicit session =>
+        resultsTable += result
+        resultsTable += GameResult(result.year, result.opposingBookId, result.opposingScore, result.bookId, result.score, result.resultTimeStamp)
+      }
+      sender ! ResultSubmitted
+    case MissingGameResultsRequest(year) =>
+      val gameResults = db.withSession { implicit session =>
+        (for {
+          (c, s) <- bracketsTable leftJoin resultsTable on (_.bookId === _.bookId)
+        } yield (c.bookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?))
+          .filter(_._7.isEmpty)
+          .sortBy(_._1)
+          .list
+          .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6) })
+      }
+      sender ! BookIdsResults(gameResults)
     case GameResultsRequest(year) =>
       val gameResults = db.withSession { implicit session =>
         (for {
@@ -161,7 +179,7 @@ class WhoWonData extends Actor with ActorLogging {
         } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName, s.score, s.opposingScore, s.resultTimeStamp))
           .sortBy(_._7.desc)
           .list
-          .map({ x => GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9) })
+        .map({ x => GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9) })
       }
       sender ! GameResults(gameResults)
     case WinningsTrackRequest(year) =>
