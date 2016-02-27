@@ -26,8 +26,6 @@ import akka.util.Timeout
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import sun.misc.BASE64Decoder
-import sun.plugin.dom.exception.InvalidStateException
-import scala.collection.immutable.Iterable
 import scala.util.Properties.envOrElse
 import scala.slick.driver.MySQLDriver.simple._
 import org.joda.time._
