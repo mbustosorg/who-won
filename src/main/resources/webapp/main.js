@@ -305,6 +305,10 @@ $(document).ready(function() {
             }).done(function(results) {
                 $('#resultsRunningQuery').addClass('hide');
                 updateMissingResults();
+                displayGameResults();
+                $('#resultsSubmitResult').addClass('alert-success');
+                $('#resultsSubmitResult').removeClass('alert-danger');
+                $('#resultsSubmitResult').html('<strong>' + results.responseText + '</strong>');
             });
         }
     });
@@ -447,19 +451,19 @@ $(document).ready(function() {
             $('#submitResult').addClass('alert-danger');
             $('#submitResult').removeClass('alert-success');
             $('#submitResult').html('<strong>Unknown BookId</strong>');
-         } else if (results.responseText == 'Bet Submitted') {
-            $('#submitResult').addClass('alert-success');
-            $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>Submitted</strong>');
-         } else if (results.responseText == 'Bet Replaced') {
-            $('#submitResult').addClass('alert-success');
-            $('#submitResult').removeClass('alert-danger');
-            $('#submitResult').html('<strong>Replaced previous</strong>');
          }
     };
 
     function statusUpdate(results, bookId) {
-        $('#runningQuery').addClass('hide');
+        if (results.responseText == 'Bet Submitted') {
+            $('#submitResult').addClass('alert-success');
+            $('#submitResult').removeClass('alert-danger');
+            $('#submitResult').html('<strong>Submitted</strong>');
+        } else if (results.responseText == 'Bet Replaced') {
+            $('#submitResult').addClass('alert-success');
+            $('#submitResult').removeClass('alert-danger');
+            $('#submitResult').html('<strong>Replaced previous</strong>');
+        }
     };
 
     function populateBookIds() {

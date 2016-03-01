@@ -123,6 +123,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   val expiration = DateTime.now + keyLifespanMillis
   val SessionKey = "WHOWON_SESSION"
   val UserKey = "WHOWON_USER"
+  val ResponseTextHeader = "{\"responseText\": "
 
   @Path("test")
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Operates connectivity test")
@@ -131,7 +132,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   def testRoute =
     path("test") {
       respondWithMediaType(`application/json`) { ctx =>
-        ctx.complete("{\"response\": \"Server is OK\"}")
+        ctx.complete(ResponseTextHeader + " \"Server is OK\"}")
       }
     }
 
@@ -147,10 +148,10 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
         val future = whoWonData ? newBet
         future onSuccess {
-          case BetSubmitted => ctx.complete(200, "Bet Submitted")
-          case BetReplaced => ctx.complete(200, "Bet Replaced")
-          case UnknownPlayer => ctx.complete(400, "Unknown Player")
-          case UnknownBookId => ctx.complete(400, "Unknown Book Id")
+          case BetSubmitted => ctx.complete(200, ResponseTextHeader + "\"Bet Submitted\"}")
+          case BetReplaced => ctx.complete(200, ResponseTextHeader + "\"Bet Replaced\"}")
+          case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
+          case UnknownBookId => ctx.complete(400, ResponseTextHeader + "\"Unknown Book Id\"}")
         }
       }
     }
@@ -168,7 +169,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         val future = whoWonData ? BetsRequest(userName, year)
         future onSuccess {
           case Bets(list) => ctx.complete(list.toJson.toString)
-          case UnknownPlayer => ctx.complete(400, "Unknown Player")
+          case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
         }
       }
     }
@@ -188,7 +189,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
                 val future = whoWonData ? TicketImage(username.content, ctx.request.entity.data.toByteString)
                 future onSuccess {
                   case location: String => ctx.complete(location)
-                  case _ => ctx.complete(400, "Error storing image")
+                  case _ => ctx.complete(400, ResponseTextHeader + "\"Error storing image\"}")
                 }
               }}
           }}
@@ -206,8 +207,8 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
         val future = whoWonData ? newResult
         future onSuccess {
-          case ResultSubmitted => ctx.complete("{\"ResultText\": \"Submitted\"}")
-          case _ => ctx.complete(500, "{``\"ResultText\": \"Problem Submitting\"}")
+          case ResultSubmitted => ctx.complete(ResponseTextHeader + "\"Submitted\"}")
+          case _ => ctx.complete(500, ResponseTextHeader + "\"Problem Submitting\"}")
         }
       }
     }
