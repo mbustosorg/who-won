@@ -326,7 +326,7 @@ $(document).ready(function() {
         var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
         $.ajax({
             type: "POST",
-            url: '/bets/',
+            url: '/bets',
             dataType: "json",
             data: dataString,
             cache: false

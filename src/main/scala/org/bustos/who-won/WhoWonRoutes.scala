@@ -135,7 +135,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
       }
     }
 
-  @Path("bets/{player}")
+  @Path("bets")
   @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a bet for player")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID")
