@@ -39,8 +39,7 @@
     </div>
 </nav>
 <div class="container-fluid">
-    <div class="list-group col-sm-4" id='betEntry'>
-        <div>
+    <div class="list-group col-sm-4" id='betEntry' style="margin-bottom: 0px;">
             <ul class="nav nav-tabs">
                 <li id='straightBetNav' class="active"><a data-toggle="tab" href="#straightPane">Straight</a></li>
                 <li id='moneyLineBetNav'><a data-toggle="tab" href="#moneylinePane">Money Line</a></li>
@@ -108,23 +107,22 @@
                 </div>
             </li>
             <li class="list-group-item" style="border: 0">
-                <p class="alert" id="submitResult"></p>
+                <div class="alert alert-info" id="submitResult" style="margin-bottom: 0px;">Please enter a bet</div>
             </li>
-        </div>
     </div>
 </div>
 <div class="container">
     <div class="hide" id="report">
         <div class="row">
-            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin' id='reportQuery'></span></label>
+            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin' id='reportQuery' style="border-left-width: 20px;"></span></label>
             <div class="col-md-12" id="winningsChart" style="height: 500px;"></div>
         </div>
         <div class="row">
-            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin hide'></span></label>
+            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin hide' style="border-left-width: 20px;"></span></label>
             <div class="col-md-12" id="percentageWinChart" style="height: 500px;"></div>
         </div>
         <div class="row">
-            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin hide'></span></label>
+            <label class='control-label'><span class='glyphicon glyphicon-refresh glyphicon-spin hide' style="border-left-width: 20px;"></span></label>
             <div class="col-md-12" id="betSizeHistogram" style="height: 500px;"></div>
         </div>
         <div class="row">
@@ -146,7 +144,7 @@
     </div>
 </div>
 <div class="container-fluid">
-    <div class="list-group col-sm-4 hide" id='admin'>
+    <div class="list-group col-sm-4 hide" id='admin' style="margin-bottom: 0px;">
         <li class="list-group-item" style="border: 0">
             <div class="form-horizontal" id='resultsEntryTab'>
                 <div class="form-group">
@@ -188,7 +186,7 @@
             </div>
         </li>
         <li class="list-group-item" style="border: 0">
-            <p class="alert" id="resultsSubmitResult"></p>
+            <div class="alert alert-info" id="resultsSubmitResult" style="margin-bottom: 0px;">Please enter a game result</div>
         </li>
     </div>
 </div>
