@@ -191,6 +191,46 @@ $(document).ready(function() {
         if (!$('#report').hasClass('hide')) {
             $('#reportQuery').removeClass('hide');
             $.ajax({
+                url: '/betProfiles/' + year(),
+                cache: false
+            }).done(function(results) {
+                var data = new google.visualization.DataTable();
+                data.addColumn('number', 'Bet Size');
+                $.each(results.values, function(key, currentBet) {
+                    var countOfBets = Number(currentBet[1]);
+                    for (i = 0; i < countOfBets; i++) {
+                        data.addRow([Number(currentBet[0])]);
+                    }
+                });
+                var options = {
+                  title: 'Bet Distribution (count vs $)',
+                  chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
+                  legend: { position: 'none' },
+                  histogram: { bucketSize: 10 }
+                };
+                var chart = new google.visualization.Histogram(document.getElementById('betSizeHistogram'));
+                chart.draw(data, options);
+                $('tbody#bet_type_table_body').empty();
+                $.each(results.largest, function(key, currentBet) {
+                    $('#bet_type_table_body').append(
+                        '<tr>' +
+                        '<td>Largest</td>' +
+                        '<td>' + currentBet.userName + '</td>' +
+                        '<td>$' + currentBet.amount + '</td>' +
+                        '</tr>'
+                    );
+                });
+                $.each(results.smallest, function(key, currentBet) {
+                    $('#bet_type_table_body').append(
+                        '<tr>' +
+                        '<td>Smallest</td>' +
+                        '<td>' + currentBet.userName + '</td>' +
+                        '<td>$' + currentBet.amount + '</td>' +
+                        '</tr>'
+                    );
+                });
+            });
+            $.ajax({
                 url: '/winnings/' + year(),
                 cache: false
             }).done(function(results) {
@@ -486,7 +526,7 @@ $(document).ready(function() {
 			$('#spreadAmount').append(currentValue);
 		}
     	$('#moneyline').empty();
-		for (i = -400.0; i <= 400; i = i + 10) {
+		for (i = -2000.0; i <= 2000; i = i + 10) {
 		    if (i <= -100.0 || i >= 100.0) {
      		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
                 if (i == 100.0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'

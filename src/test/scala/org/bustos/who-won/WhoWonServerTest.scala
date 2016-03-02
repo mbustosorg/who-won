@@ -22,23 +22,6 @@ class WhoWonServerTest extends Specification with Specs2RouteTest with HttpServi
       }
     }
 
-    "Time series tests" in {
-      Get("/v9999-12-31T00_00_00/byCompany/1/price") ~> routes.routes ~> check {
-        responseAs[String] must contain(""""value":228""")
-      }
-      Get("/v9999-12-31T00_00_00/byCompany/1,2/price") ~> routes.routes ~> check {
-        responseAs[String] must contain(""""value":225""")
-      }
-    }
-
-    "Cross section tests" in {
-      Get("/v9999-12-31T00_00_00/byMonth/600/price") ~> routes.routes ~> check {
-        responseAs[String] must contain(""""value":18.125""")
-      }
-      Get("/v9999-12-31T00_00_00/byMonth/600/dehp,price") ~> routes.routes ~> check {
-        responseAs[String] must contain(""""value":0.020817""")
-      }
-    }
   }
 
 }

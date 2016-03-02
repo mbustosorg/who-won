@@ -231,5 +231,22 @@ class WhoWonData extends Actor with ActorLogging {
       decodedStream.write(decoded)
       decodedStream.close()
       sender ! "tickets/" + name + "/ticket_" + dateString + ".png"
+    case BetProfilesRequest(year) =>
+      val betCounts: List[(String, Double, Int)] = db.withSession { implicit session =>
+        betsTable
+          .filter(_.year === year)
+          .groupBy({ row => (row.userName, row.amount) })
+          .map({ case ((rowName, amount), results) => (rowName, amount, results.length) })
+          .list
+      }.sortBy(_._2)
+      val lowBets = {
+        if (betCounts.isEmpty) List()
+        else betCounts.filter(_._2 == betCounts.head._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "")})
+      }
+      val highBets = {
+        if (betCounts.isEmpty) List()
+        else betCounts.filter(_._2 == betCounts.last._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "")})
+      }
+      sender ! BetProfiles(betCounts.map({ row => (row._2, row._3)}), highBets, lowBets)
   }
 }

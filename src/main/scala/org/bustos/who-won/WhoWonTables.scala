@@ -53,6 +53,8 @@ object WhoWonTables {
   case class PlayerWinnings(userName: String, winnings: List[Double], percentage: List[Int])
   case class WinningsTrack(timestamps: List[DateTime], list: List[PlayerWinnings])
   case class TicketImage(userName: String, image: ByteString)
+  case class BetProfilesRequest(year: Int)
+  case class BetProfiles(values: List[(Double, Int)], largest: List[Bet], smallest: List[Bet])
   // Error case classes
   case class UnknownPlayer()
   case class UnknownBookId()
@@ -111,6 +113,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val bookIdsResults = jsonFormat1(BookIdsResults)
   implicit val playerWinnings = jsonFormat3(PlayerWinnings)
   implicit val winningsTrack = jsonFormat2(WinningsTrack)
+  implicit val betProfilesRequest = jsonFormat3(BetProfiles)
 }
 
 class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {

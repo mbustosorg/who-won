@@ -86,6 +86,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     missingGamesRequest ~
     winnings ~
     saveTicket ~
+    betProfiles ~
     login
 
   val authenticationRejection = RejectionHandler {
@@ -144,23 +145,29 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   @ApiResponses(Array())
   def postBet = post {
     path("bets") {
-      respondWithMediaType(`application/json`) { ctx =>
-        val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
-        val future = whoWonData ? newBet
-        future onSuccess {
-          case BetSubmitted => ctx.complete(200, ResponseTextHeader + "\"Bet Submitted\"}")
-          case BetReplaced => ctx.complete(200, ResponseTextHeader + "\"Bet Replaced\"}")
-          case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
-          case UnknownBookId => ctx.complete(400, ResponseTextHeader + "\"Unknown Book Id\"}")
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          respondWithMediaType(`application/json`) { ctx =>
+            val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
+            val future = whoWonData ? newBet
+            future onSuccess {
+              case BetSubmitted => ctx.complete(200, ResponseTextHeader + "\"Bet Submitted\"}")
+              case BetReplaced => ctx.complete(200, ResponseTextHeader + "\"Bet Replaced\"}")
+              case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
+              case UnknownBookId => ctx.complete(400, ResponseTextHeader + "\"Unknown Book Id\"}")
+            }
+          }
         }
-      }
+        }
+      }}
     }
   }
 
-  @Path("bets/{player}")
+  @Path("bets/{player}/{year}")
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Submitted bets for player")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID")
+    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID"),
+    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
   ))
   @ApiResponses(Array())
   def bets = get {
@@ -203,15 +210,19 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   @ApiResponses(Array())
   def postGameResult = post {
     path("games" / IntNumber) { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
-        val future = whoWonData ? newResult
-        future onSuccess {
-          case ResultSubmitted => ctx.complete(ResponseTextHeader + "\"Submitted\"}")
-          case _ => ctx.complete(500, ResponseTextHeader + "\"Problem Submitting\"}")
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          respondWithMediaType(`application/json`) { ctx =>
+            val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
+            val future = whoWonData ? newResult
+            future onSuccess {
+              case ResultSubmitted => ctx.complete(ResponseTextHeader + "\"Submitted\"}")
+              case _ => ctx.complete(500, ResponseTextHeader + "\"Problem Submitting\"}")
+            }
+          }
         }
-      }
-    }
+        }}
+      }}
   }
 
   @Path("games/{year}")
@@ -271,6 +282,25 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     }
   }
 
+  @Path("betProfiles")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get bet profiles")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
+  ))
+  @ApiResponses(Array())
+  def betProfiles = get {
+    path("betProfiles" /  IntNumber) { (year) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val future = whoWonData ? BetProfilesRequest(year)
+        future onSuccess {
+          case x: BetProfiles => {
+            ctx.complete(x.toJson.toString)
+          }
+        }
+      }
+    }
+  }
+
   @Path("winnings/{year}")
   @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get summary winnings results for a year")
   @ApiImplicitParams(Array(
@@ -291,7 +321,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   }
 
   @Path("")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Bet entry")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Index")
   @ApiImplicitParams(Array())
   @ApiResponses(Array())
   def betEntry = get {
