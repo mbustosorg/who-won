@@ -34,7 +34,7 @@ $(document).ready(function() {
 
     function year() {
         var year = (new Date()).getFullYear();
-        year = 2015;
+        //year = 2015;
         return year;
     }
 

@@ -126,9 +126,9 @@ class WhoWonData extends Actor with ActorLogging {
       else if (!validBookId(bet.bookId, bet.year)) sender ! UnknownBookId
       else {
         val message = db.withSession { implicit session =>
-          val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).list
+          val previousBet = betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType && x.year === bet.year}).list
           if (previousBet.nonEmpty) {
-            betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType }).delete
+            betsTable.filter({ x => x.userName === bet.userName && x.bookId === bet.bookId && x.betType === bet.betType && x.year === bet.year }).delete
             betsTable += bet
             BetReplaced
           } else {
@@ -172,8 +172,8 @@ class WhoWonData extends Actor with ActorLogging {
       val gameResults = db.withSession { implicit session =>
         (for {
           c <- bracketsTable if c.year === year
-          s <- resultsTable if c.bookId === s.bookId && s.bookId < s.opposingBookId
-          d <- bracketsTable if s.opposingBookId === d.bookId
+          s <- resultsTable if c.bookId === s.bookId && s.bookId < s.opposingBookId && s.year === year
+          d <- bracketsTable if s.opposingBookId === d.bookId && d.year === year
         } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName, s.score, s.opposingScore, s.resultTimeStamp))
           .sortBy(_._7.desc)
           .list
@@ -188,10 +188,13 @@ class WhoWonData extends Actor with ActorLogging {
         betsTable.filter(_.year === year).list.groupBy(_.userName)
       }
       val outlays = db.withSession { implicit session =>
-        betsTable.groupBy(_.userName).map({ case (user, bets) => (user, bets.map(_.amount).sum)}).list.toMap
+        betsTable.filter(_.year === year).groupBy(_.userName).map({ case (user, bets) => (user, bets.map(_.amount).sum)}).list.toMap
       }
       val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
-      val timestamps = { new DateTime(resultsTimestamps.head).plusMinutes(-15) } :: resultsTimestamps
+      val timestamps = {
+        if (resultsTimestamps.isEmpty) resultsTimestamps
+        else { new DateTime(resultsTimestamps.head).plusMinutes(-15) } :: resultsTimestamps
+      }
       val acc = bets.map({ case (k, v) =>
         var outlay = -outlays(k).get
         (k, timestamps.map({ timestamp =>

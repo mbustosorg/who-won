@@ -85,6 +85,26 @@ object WhoWon extends App {
         }
       })
     }
+    db.withSession { implicit session =>
+      bracketsTable.filter(_.year === 2016).delete
+      val reader = CSVReader.open(new File("data/2016brackets.csv"))
+      reader.foreach(fields => {
+        println(fields)
+        if (fields(0) != "bookId") {
+          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2), fields(3).toInt, fields(4), formatter.parseDateTime(fields(5)))
+        }
+      })
+    }
+    db.withSession { implicit session =>
+      resultsTable.filter(_.year === 2016).delete
+      val reader = CSVReader.open(new File("data/2016results.csv"))
+      reader.foreach(fields => {
+        println(fields)
+        if (fields(0) != "bookId") {
+          resultsTable += GameResult(fields(1).toInt, fields(0).toInt, fields(2).toInt, fields(3).toInt, fields(4).toInt, formatter.parseDateTime(fields(5)))
+        }
+      })
+    }
   }
 
   doMain
