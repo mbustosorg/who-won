@@ -160,7 +160,7 @@ class WhoWonData extends Actor with ActorLogging {
     case MissingGameResultsRequest(year) =>
       val gameResults = db.withSession { implicit session =>
         (for {
-          (c, s) <- bracketsTable leftJoin resultsTable on (_.bookId === _.bookId)
+          (c, s) <- bracketsTable.filter(_.year === year) leftJoin resultsTable.filter(_.year === year) on (_.bookId === _.bookId)
         } yield (c.bookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?))
           .filter(_._7.isEmpty)
           .sortBy(_._1)
