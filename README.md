@@ -10,6 +10,7 @@ To run it for your own deployment you will need to set the following ENV variabl
 * WHOWON_MYSQL_USER
 * WHOWON_MYSQL_PASSWORD
 * WHOWON_USER_PASSWORDS
+* WHOWON_HOUSE_TAKE
 
 To set these in Heroku, you can do the following:
 
@@ -26,4 +27,7 @@ WHOWON_MYSQL_PASSWORDS: *****
 $ heroku config:set WHOWON_USER_PASSWORDS="user1,pass1;user2,pass2"
 Setting config vars and restarting who-won... done
 WHOWON_USER_PASSWORDS: *****
+$ heroku config:set WHOWON_HOUSE_TAKE="0.0455"
+Setting config vars and restarting who-won... done
+WHOWON_HOUSE_TAKE: 0.0455
 ```

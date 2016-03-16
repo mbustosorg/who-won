@@ -27,14 +27,16 @@ import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, DateTimeFormatte
 import scala.slick.driver.MySQLDriver.simple._
 import spray.json._
 
+import scala.util.Properties._
+
 object WhoWonTables {
 
   // Constants
   val StraightBet = "ST"
   val MoneylineBet = "ML"
-  val StraightBetPayoff = 1.0 - 0.0455
+  val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
   // Base case classes
-  case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String)
+  case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(year: Int, bookId: Int, score: Int, opposingBookId: Int, opposingScore: Int, resultTimeStamp: DateTime)
@@ -98,7 +100,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   }
 
   // Base case classes
-  implicit val bet = jsonFormat6(Bet)
+  implicit val bet = jsonFormat7(Bet)
   implicit val bracket = jsonFormat6(Bracket)
   implicit val player = jsonFormat5(Player)
   implicit val result = jsonFormat6(GameResult)
@@ -125,8 +127,9 @@ class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
   def spread_ml = column[Double]("spread_ml")
   def amount = column[Double]("amount")
   def betType = column[String]("betType")
+  def timestamp = column[DateTime]("timestamp")
 
-  def * = (userName, bookId, year, spread_ml, amount, betType) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
+  def * = (userName, bookId, year, spread_ml, amount, betType, timestamp) <> (WhoWonTables.Bet.tupled, WhoWonTables.Bet.unapply)
 }
 
 class BracketsTable(tag: Tag) extends Table[WhoWonTables.Bracket](tag, "brackets") {

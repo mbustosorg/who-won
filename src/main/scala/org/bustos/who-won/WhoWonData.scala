@@ -26,6 +26,7 @@ import akka.util.Timeout
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import sun.misc.BASE64Decoder
+import scala.collection.immutable.Iterable
 import scala.util.Properties.envOrElse
 import scala.slick.driver.MySQLDriver.simple._
 import org.joda.time._
@@ -185,31 +186,32 @@ class WhoWonData extends Actor with ActorLogging {
         resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
       }
       val bets = db.withSession { implicit session =>
-        betsTable.filter(_.year === year).list.groupBy(_.userName)
+        betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
       }
-      val outlays = db.withSession { implicit session =>
-        betsTable.filter(_.year === year).groupBy(_.userName).map({ case (user, bets) => (user, bets.map(_.amount).sum)}).list.toMap
-      }
+      val betsByUserMap: Map[String, Map[String, Bet]] = bets.map({ case (k, v) => (k, v.map({ x => ((x.bookId + x.betType), x)}).toMap)})
       val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
-      val timestamps = {
-        if (resultsTimestamps.isEmpty) resultsTimestamps
-        else { new DateTime(resultsTimestamps.head).plusMinutes(-15) } :: resultsTimestamps
-      }
-      val acc = bets.map({ case (k, v) =>
-        var outlay = -outlays(k).get
+      val betTimestamps = bets.map({ case (k, v) => v.map(_.timestamp)}).flatMap(x => x).toList.distinct.sorted
+      val timestamps: List[DateTime] = (resultsTimestamps ++ betTimestamps).distinct.sorted
+      val acc: Iterable[PlayerWinnings] = bets.map({ case (k, v) =>
         (k, timestamps.map({ timestamp =>
-          v.foldLeft((outlay, 0.0, 0))({ (acc, x) =>
+          val timeMillis = timestamp.getMillis
+          val filteredBets = v.filter(_.timestamp.getMillis <= timeMillis)
+          filteredBets.foldLeft((0.0, 0.0, 0))({ (acc, x) =>
+            val mlBook = x.bookId + "ML"
+            val stBook = x.bookId + "ST"
+            val newAccML = if (betsByUserMap(k).contains(mlBook) && betsByUserMap(k)(mlBook).timestamp.getMillis == x.timestamp.getMillis) (acc._1 - betsByUserMap(k)(mlBook).amount, acc._2, acc._3) else acc
+            val newAccST = if (betsByUserMap(k).contains(stBook) && betsByUserMap(k)(stBook).timestamp.getMillis == x.timestamp.getMillis) (newAccML._1 - betsByUserMap(k)(stBook).amount, newAccML._2, newAccML._3) else newAccML
             if (gameResults.contains(x.bookId)) {
               val game = gameResults(x.bookId)
-              if (game.resultTimeStamp.getMillis <= timestamp.getMillis) {
+              if (game.resultTimeStamp.getMillis <= timeMillis) {
                 val payoff = betResult(x, Some(game)).payoff
                 val win = if (payoff > 0.0) 1 else 0
-                (acc._1 + payoff, acc._2 + win, acc._3 + 1)
-              } else acc
-            } else acc
+                (newAccST._1 + payoff, newAccST._2 + win, newAccST._3 + 1)
+              } else newAccST
+            } else newAccST
           })
         }))
-      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1}), v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}))})
+      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1 }), v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}))})
       val tracking = WinningsTrack(timestamps, acc.toList)
       sender ! tracking
     case BookIdsRequest(year) =>
@@ -244,11 +246,11 @@ class WhoWonData extends Actor with ActorLogging {
       }.sortBy(_._2)
       val lowBets = {
         if (betCounts.isEmpty) List()
-        else betCounts.filter(_._2 == betCounts.head._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "")})
+        else betCounts.filter(_._2 == betCounts.head._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "", new DateTime())})
       }
       val highBets = {
         if (betCounts.isEmpty) List()
-        else betCounts.filter(_._2 == betCounts.last._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "")})
+        else betCounts.filter(_._2 == betCounts.last._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "", new DateTime())})
       }
       sender ! BetProfiles(betCounts.map({ row => (row._2, row._3)}), highBets, lowBets)
   }

@@ -371,7 +371,7 @@ $(document).ready(function() {
             betType = 'ST';
             spreadMlAmount = $('#spreadAmount').val();
         }
-        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\"}';
+        var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\", \"timestamp\": \"' + (new Date()).toISOString() + '\"}';
         $.ajax({
             type: "POST",
             url: '/bets',
@@ -413,7 +413,7 @@ $(document).ready(function() {
 					'</tr>'
 				);
 			});
-			$('#betHeader').text('(Outlay: $' + currentOutlay +', Winnings: $' + currentWinnings.toFixed(2) + ')');
+			$('#betHeader').text('(Outlay: $' + currentOutlay +', Net Winnings: $' + (currentWinnings - currentOutlay).toFixed(2) + ')');
             $('#runningQuery').addClass('hide');
 		});
     };
