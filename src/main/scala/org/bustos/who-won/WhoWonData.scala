@@ -109,10 +109,13 @@ class WhoWonData extends Actor with ActorLogging {
             else if (resultType == "Lose") 0.0
             else bet.amount
           } else {
-            if (bet.spread_ml >= 100.0) {
-              bet.amount + bet.amount * (bet.spread_ml / 100.0)
-            } else {
-              bet.amount + bet.amount * (1.0 / (bet.spread_ml / 100.0))
+            if (resultType == "Lose") 0.0
+            else {
+              if (bet.spread_ml >= 100.0) {
+                bet.amount + bet.amount * (bet.spread_ml / 100.0)
+              } else {
+                bet.amount + bet.amount * (1.0 / (bet.spread_ml / 100.0))
+              }
             }
           }
         }
