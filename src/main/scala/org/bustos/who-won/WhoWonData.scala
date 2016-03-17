@@ -95,7 +95,7 @@ class WhoWonData extends Actor with ActorLogging {
           if (bet.betType == StraightBet) {
             result.score - result.opposingScore + bet.spread_ml
           } else {
-            result.score - result.opposingScore + bet.spread_ml
+            result.score - result.opposingScore
           }
         }
         val resultType = {
