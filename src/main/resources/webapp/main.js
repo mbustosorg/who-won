@@ -319,7 +319,7 @@ $(document).ready(function() {
         else {
             $.ajax({
                 type: "POST",
-                url: '/ticket/',
+                url: '/ticket',
                 dataType: 'json',
                 data: $('#snapImage').attr('src')
             }).done(function(results) {

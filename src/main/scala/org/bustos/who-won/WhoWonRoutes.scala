@@ -26,7 +26,6 @@ import akka.pattern.ask
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.annotations._
 import com.wordnik.swagger.model.ApiInfo
-import org.bustos.whowon.WhoWonJsonProtocol._
 import org.bustos.whowon.WhoWonTables._
 import org.slf4j.LoggerFactory
 import spray.http.MediaTypes._
@@ -57,7 +56,7 @@ class WhoWonServiceActor extends HttpServiceActor with ActorLogging {
     override def baseUrl = "/"
     override def docsPath = "api-docs"
     override def actorRefFactory = context
-    override def apiInfo = Some(new ApiInfo("WhoWon Bet Trackig API",
+    override def apiInfo = Some(new ApiInfo("WhoWon Bet Tracking API",
       "API for interacting with the WhoWon Server.", "", "", "", ""))
   }
 }

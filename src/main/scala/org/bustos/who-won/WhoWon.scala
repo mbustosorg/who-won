@@ -25,13 +25,12 @@ import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import org.joda.time.{DateTimeZone, DateTime}
-import spray.can.Http
-import com.typesafe.config.ConfigFactory
-import scala.util.Properties.envOrElse
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import com.github.tototoshi.csv._
+import com.typesafe.config.ConfigFactory
+import spray.can.Http
+
+import scala.concurrent.duration._
+import scala.util.Properties.envOrElse
 
 object WhoWon extends App {
 
@@ -53,8 +52,9 @@ object WhoWon extends App {
   }
 
   def initializeData = {
-    import WhoWonTables._
     import WhoWonData._
+    import WhoWonTables._
+
     import scala.slick.driver.MySQLDriver.simple._
 
     db.withSession { implicit session =>
