@@ -19,19 +19,20 @@
 
 package org.bustos.whowon
 
-import java.io.{FileOutputStream, File}
+import java.io.{File, FileOutputStream}
 
 import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
+import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import sun.misc.BASE64Decoder
+
 import scala.collection.immutable.Iterable
-import scala.util.Properties.envOrElse
-import scala.slick.driver.MySQLDriver.simple._
-import org.joda.time._
 import scala.concurrent.duration._
-import spray.json._
+import scala.slick.driver.MySQLDriver.simple._
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.util.Properties.envOrElse
 
 object WhoWonData {
 
@@ -53,7 +54,6 @@ class WhoWonData extends Actor with ActorLogging {
 
   import WhoWonData._
   import WhoWonTables._
-  import WhoWonJsonProtocol._
 
   val logger =  LoggerFactory.getLogger(getClass)
 
@@ -256,5 +256,12 @@ class WhoWonData extends Actor with ActorLogging {
         else betCounts.filter(_._2 == betCounts.last._2).map({ row => Bet(row._1, 0, year, 0.0, row._2, "", new DateTime())})
       }
       sender ! BetProfiles(betCounts.map({ row => (row._2, row._3)}), highBets, lowBets)
+    case YearsRequest =>
+      val query = sql"""select distinct year from bets order by year desc""".as[(Int)]
+      val years = db.withSession{ implicit session =>
+        query.list
+      }
+      val thisYear = new DateTime
+      sender ! thisYear.getYear :: years
   }
 }

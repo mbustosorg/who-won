@@ -33,8 +33,10 @@ $(document).ready(function() {
     }
 
     function year() {
-        var year = (new Date()).getFullYear();
-        //year = 2015;
+        var year = $('#yearDropdownLabel').text();
+        if (year == 'Year ') {
+           year = (new Date()).getFullYear();
+        }
         return year;
     }
 
@@ -94,6 +96,9 @@ $(document).ready(function() {
         img.id = 'snapImage';
         $('#photoPage').prepend(img);
         $('#snapImage').css('width','300');
+        Tesseract.recognize(img)
+                 .progress(function  (p) { console.log('progress', p)    })
+                 .then(function (result) { console.log('result', result) })
     });
 
     $('#snapRetakeButton').click(function() {
@@ -139,6 +144,7 @@ $(document).ready(function() {
         $('#entryPageNav').addClass('active');
         $('#reportPageNav').removeClass('active');
         $('#adminPageNav').removeClass('active');
+        $('#logoutNav').removeClass('active');
     });
     $('#reportPageNav').click(function() {
         $('#betEntry').addClass('hide');
@@ -147,6 +153,7 @@ $(document).ready(function() {
         $('#entryPageNav').removeClass('active');
         $('#reportPageNav').addClass('active');
         $('#adminPageNav').removeClass('active');
+        $('#logoutNav').removeClass('active');
         updateWinnings();
     });
     $('#adminPageNav').click(function() {
@@ -157,7 +164,28 @@ $(document).ready(function() {
         $('#entryPageNav').removeClass('active');
         $('#adminPageNav').addClass('active');
         $('#resultsRunningQuery').removeClass('hide');
+        $('#logoutNav').removeClass('active');
         updateMissingResults();
+    });
+    $('#logoutNav').click(function() {
+        $('#betEntry').addClass('hide');
+        $('#report').addClass('hide');
+        $('#admin').addClass('hide');
+        $('#entryPageNav').removeClass('active');
+        $('#reportPageNav').removeClass('active');
+        $('#adminPageNav').removeClass('active');
+        $('#logoutNav').addClass('active');
+        $.ajax({
+          type: "POST",
+          url: "/logout",
+          success: function(data){
+            var http = location.protocol;
+            var slashes = http.concat("//");
+            var host = slashes.concat(window.location.host);
+            window.location.replace(host.concat(data));
+            window.location.reload();
+          }
+        });
     });
 
     function updateMissingResults() {
@@ -510,6 +538,37 @@ $(document).ready(function() {
         }
     };
 
+    function populateYears() {
+        $.ajax({
+            url: '/years',
+            cache: false
+        }).done(function(results) {
+			$('#years').empty();
+			$.each(results, function(key, year) {
+			    if (results[0] == year) {
+                    $('#years').append(
+                        '<li class=\"active\" value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
+                    );
+                    $('#yearDropdownLabel').html(year);
+			    } else {
+                    $('#years').append(
+                        '<li value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
+                    );
+                }
+                $('#year_' + year).click(function(event) {
+                    $.each(this.parentNode.childNodes, function (index, node) {
+                        $('#' + node.id).removeClass('active');
+                    });
+                    $('#' + this.id).addClass('active');
+                    $('#yearDropdownLabel').html(this.textContent);
+                    displayCurrentBets();
+                    displayGameResults();
+                    populateBookIds();
+                });
+ 			});
+		});
+    };
+
     function populateBookIds() {
         $.ajax({
             url: '/bookIds/' + year(),
@@ -560,4 +619,5 @@ $(document).ready(function() {
     displayCurrentBets();
     displayGameResults();
     populateBookIds();
+    populateYears();
 });

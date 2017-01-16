@@ -19,15 +19,14 @@
 
 package org.bustos.whowon
 
+import akka.util.Timeout
+import org.slf4j.Logger
+import spray.routing._
+import spray.routing.authentication._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Properties.envOrElse
-import akka.util.Timeout
-import akka.pattern.ask
-import akka.actor.{ ActorRef, ActorSystem }
-import spray.routing._
-import spray.routing.authentication._
-import org.slf4j.{Logger, LoggerFactory}
 
 object UserAuthentication {
   case class AuthenticationRejection(reason: String) extends Rejection
@@ -52,6 +51,10 @@ trait UserAuthentication {
   }
 
   var sessionIds = Map.empty[String, String]
+
+  def removeSession(email: String) = {
+    sessionIds -= email
+  }
 
   def authenticateUser(email: String, password: String)(implicit ec: ExecutionContext): ContextAuthenticator[Authenticated] = {
     ctx =>

@@ -40,6 +40,7 @@ object WhoWonTables {
   case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(year: Int, bookId: Int, score: Int, opposingBookId: Int, opposingScore: Int, resultTimeStamp: DateTime)
+  case object YearsRequest
   // Utility case classes
   case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
   case class BetsRequest(playerId: String, year: Int)

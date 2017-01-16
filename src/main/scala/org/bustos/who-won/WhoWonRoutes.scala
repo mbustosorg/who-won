@@ -67,6 +67,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   import java.net.InetAddress
 
   import UserAuthentication._
+  import WhoWonJsonProtocol._
 
   val logger = LoggerFactory.getLogger(getClass)
   val system = ActorSystem("whoWonSystem")
@@ -86,6 +87,8 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     winnings ~
     saveTicket ~
     betProfiles ~
+    years ~
+    logout ~
     login
 
   val authenticationRejection = RejectionHandler {
@@ -338,6 +341,34 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
       } ~ getFromResource("webapp/login.html")
     }
   }
+
+  @Path("years")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Index")
+  @ApiImplicitParams(Array())
+  @ApiResponses(Array())
+  def years = get {
+    path("years") {
+      respondWithMediaType(`application/json`) { ctx =>
+        val future = whoWonData ? YearsRequest
+        future onSuccess {
+          case x: List[Int] => ctx.complete(x.toJson.toString)
+          case _ => ctx.complete(400, ResponseTextHeader + "\"Problem Submitting\"}")
+        }
+      }
+    }
+  }
+
+  def logout = post {
+    path("logout") {
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+        removeSession(username.content)
+          complete("/login")
+        }
+      }
+      }
+      }
+    }}
 
   def admin = get {
     path("admin") {
