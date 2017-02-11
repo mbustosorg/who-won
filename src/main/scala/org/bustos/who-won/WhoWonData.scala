@@ -39,6 +39,7 @@ object WhoWonData {
   val quarterMile = 1.0 / 60.0 / 4.0 // In degrees
   val TicketImageDestination = "src/main/resources/webapp/tickets/"
   val WestCoastId = "America/Los_Angeles"
+  val LocalTimeZone = DateTimeZone.forID(WestCoastId)
   val hhmmssFormatter = DateTimeFormat.forPattern("hh:mm:ss a")
   val filedateFormatter = DateTimeFormat.forPattern("yyyymmddhhmmss")
 
@@ -165,11 +166,11 @@ class WhoWonData extends Actor with ActorLogging {
       val gameResults = db.withSession { implicit session =>
         (for {
           (c, s) <- bracketsTable.filter(_.year === year) leftJoin resultsTable.filter(_.year === year) on (_.bookId === _.bookId)
-        } yield (c.bookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?))
-          .filter(_._7.isEmpty)
+        } yield (c.bookId, c.opposingBookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?))
+          .filter(_._8.isEmpty)
           .sortBy(_._1)
           .list
-          .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6) })
+          .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6, x._7.toDateTime(LocalTimeZone))})
       }
       sender ! BookIdsResults(gameResults)
     case GameResultsRequest(year) =>
@@ -181,7 +182,9 @@ class WhoWonData extends Actor with ActorLogging {
         } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName, s.score, s.opposingScore, s.resultTimeStamp))
           .sortBy(_._7.desc)
           .list
-        .map({ x => GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9) })
+        .map({ x =>
+          GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9.toDateTime(LocalTimeZone))
+        })
       }
       sender ! GameResults(gameResults)
     case WinningsTrackRequest(year) =>
@@ -215,7 +218,11 @@ class WhoWonData extends Actor with ActorLogging {
           })
         }))
       }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1 }), v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}))})
-      val tracking = WinningsTrack(timestamps, acc.toList)
+      val tracking = WinningsTrack(timestamps.map({ ts =>
+        val tsLocal = ts.minusHours(7)
+        if (tsLocal.getDayOfYear > timestamps.head.getDayOfYear) tsLocal.minusHours(10)
+        else tsLocal
+      }), acc.toList)
       sender ! tracking
     case BookIdsRequest(year) =>
       val bookIdResults = db.withSession { implicit session =>
@@ -263,5 +270,19 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       sender ! thisYear.getYear :: years
+    case CompetitionRequest(year, bet) =>
+      val opposingBookId = db.withSession { implicit session =>
+        bracketsTable.filter( x => { x.bookId === bet && x.year === year }).list.head.opposingBookId
+      }
+      val gameResults = db.withSession { implicit session =>
+        resultsTable.filter( x => { x.year === year && (x.bookId === bet || x.bookId === opposingBookId) }).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
+      }
+      val bets = db.withSession { implicit session =>
+        betsTable.filter({ x => (x.bookId === bet || x.bookId === opposingBookId) && x.year === year }).list
+      }.map({ bet =>
+        if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
+        else betResult(bet, None)
+      })
+      sender ! Competitors(bets)
   }
 }

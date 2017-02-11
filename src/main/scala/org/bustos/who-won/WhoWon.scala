@@ -71,7 +71,7 @@ object WhoWon extends App {
       reader.foreach(fields => {
         println(fields)
         if (fields(0) != "bookId") {
-          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2), fields(3).toInt, fields(4), formatter.parseDateTime(fields(5)))
+          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3), fields(4).toInt, fields(5), formatter.parseDateTime(fields(6)))
         }
       })
     }
@@ -91,7 +91,7 @@ object WhoWon extends App {
       reader.foreach(fields => {
         println(fields)
         if (fields(0) != "bookId") {
-          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2), fields(3).toInt, fields(4), formatter.parseDateTime(fields(5)))
+          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3), fields(4).toInt, fields(5), formatter.parseDateTime(fields(6)))
         }
       })
     }

@@ -37,7 +37,7 @@ object WhoWonTables {
   val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
   // Base case classes
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
-  case class Bracket(bookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
+  case class Bracket(bookId: Int, opposingBookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(year: Int, bookId: Int, score: Int, opposingBookId: Int, opposingScore: Int, resultTimeStamp: DateTime)
   case object YearsRequest
@@ -58,6 +58,8 @@ object WhoWonTables {
   case class TicketImage(userName: String, image: ByteString)
   case class BetProfilesRequest(year: Int)
   case class BetProfiles(values: List[(Double, Int)], largest: List[Bet], smallest: List[Bet])
+  case class CompetitionRequest(year: Int, bookId: Int)
+  case class Competitors(others: List[BetDisplay])
   // Error case classes
   case class UnknownPlayer()
   case class UnknownBookId()
@@ -102,7 +104,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
 
   // Base case classes
   implicit val bet = jsonFormat7(Bet)
-  implicit val bracket = jsonFormat6(Bracket)
+  implicit val bracket = jsonFormat7(Bracket)
   implicit val player = jsonFormat5(Player)
   implicit val result = jsonFormat6(GameResult)
   // Utility case classes
@@ -117,6 +119,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val playerWinnings = jsonFormat3(PlayerWinnings)
   implicit val winningsTrack = jsonFormat2(WinningsTrack)
   implicit val betProfilesRequest = jsonFormat3(BetProfiles)
+  implicit val competitors = jsonFormat1(Competitors)
 }
 
 class BetsTable(tag: Tag) extends Table[WhoWonTables.Bet](tag, "bets") {
@@ -137,13 +140,14 @@ class BracketsTable(tag: Tag) extends Table[WhoWonTables.Bracket](tag, "brackets
   import WhoWonTables.dateTime
 
   def bookId = column[Int]("bookId")
+  def opposingBookId = column[Int]("opposingBookId")
   def year = column[Int]("year")
   def region = column[String]("region")
   def seed = column[Int]("seed")
   def teamName = column[String]("teamName")
   def gameTime = column[DateTime]("gameTime")
 
-  def * = (bookId, year, region, seed, teamName, gameTime) <> (WhoWonTables.Bracket.tupled, WhoWonTables.Bracket.unapply)
+  def * = (bookId, opposingBookId, year, region, seed, teamName, gameTime) <> (WhoWonTables.Bracket.tupled, WhoWonTables.Bracket.unapply)
 }
 
 class PlayersTable(tag: Tag) extends Table[WhoWonTables.Player](tag, "players") {

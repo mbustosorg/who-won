@@ -217,7 +217,7 @@ $(document).ready(function() {
             }
             $('#resultsRunningQuery').addClass('hide');
         });
-}
+    }
 
     function updateWinnings() {
         if (!$('#report').hasClass('hide')) {
@@ -290,19 +290,7 @@ $(document).ready(function() {
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
                     title: 'Time',
-                    gridlines: {
-                      count: -1,
-                      units: {
-                        days: {format: ['MMM dd']},
-                        hours: {format: ['HH:mm', 'ha']},
-                      }
-                    },
-                    minorGridlines: {
-                      units: {
-                        hours: {format: ['hh:mm:ss a', 'ha']},
-                        minutes: {format: ['HH:mm a Z', ':mm']}
-                      }
-                    }
+                    ticks: []
                   },
                   vAxis: {
                     minValue: 0
@@ -316,19 +304,7 @@ $(document).ready(function() {
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
                     title: 'Time',
-                    gridlines: {
-                      count: -1,
-                      units: {
-                        days: {format: ['MMM dd']},
-                        hours: {format: ['HH:mm', 'ha']},
-                      }
-                    },
-                    minorGridlines: {
-                      units: {
-                        hours: {format: ['hh:mm:ss a', 'ha']},
-                        minutes: {format: ['HH:mm a Z', ':mm']}
-                      }
-                    }
+                    ticks: []
                   },
                   vAxis: {
                     minValue: 0
@@ -390,7 +366,7 @@ $(document).ready(function() {
         var bookId = $('#bookId').val().split(' ')[0];
         var spreadMlAmount = '0';
         var betAmount = $('#betAmount').val();
-        var userName = getCookie("WHOWON_USER")
+        var userName = getCookie("WHOWON_USER");
         var betType = '';
         if ($('#moneylinePane').hasClass('active')) {
             betType = 'ML';
@@ -415,6 +391,43 @@ $(document).ready(function() {
         });
      };
 
+    function statusColor(currentBet, strong) {
+        var a = '1.0';
+        if (!strong) a = '0.3';
+        var bgcolor = 'rgba(255, 255, 255, 1.0)';
+        if (currentBet.resultString == 'Lose') bgcolor = 'rgba(255, 25, 0, ' + a + ')';
+        else if (currentBet.resultString == 'Win') bgcolor = 'rgba(109, 255, 109, ' + a + ')';
+        return bgcolor;
+    };
+
+    function displayCompetitors(e) {
+        var bet = e.currentTarget.id.replace('button', '');
+        $.ajax({
+            type: "GET",
+            url: '/competition/' + year() + '/' + bet,
+            cache: false
+        }).done (function (bets) {
+            var newTable = '';
+            var userName = getCookie("WHOWON_USER");
+            $.each(bets, function(key, currentBet) {
+                if (userName != currentBet.bet.userName) {
+                    newTable = newTable +
+                        '<tr id="competitors_' + bet + '_' + i + '">' +
+                        '<td></td>' +
+                        '<td>' + currentBet.bet.userName + '</td>' +
+                        '<td>' + currentBet.bracket.teamName + '</td>' +
+                        '<td>' + currentBet.bet.betType + '</td>' +
+                        '<td>' + currentBet.bet.spread_ml + '</td>' +
+                        '<td>$' + currentBet.bet.amount + '</td>' +
+                        '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
+                        '</tr>';
+                };
+            });
+            $('[id^=competitors]').remove();
+            $('#bets' + bet).after(newTable);
+        });
+    };
+
     function displayCurrentBets() {
         var userName = getCookie("WHOWON_USER")
 		$.ajax({
@@ -427,19 +440,19 @@ $(document).ready(function() {
 			$.each(bets, function(key, currentBet) {
 			    currentOutlay += Number(currentBet.bet.amount);
 			    currentWinnings += Number(currentBet.payoff);
-                var bgcolor = '#FFFFFF';
-                if (currentBet.resultString == 'Lose') bgcolor = '#FF0017';
-                else if (currentBet.resultString == 'Win') bgcolor = '#6DFF6C';
 				$('#bets_table_body').append(
                     '<tr id="bets' + currentBet.bet.bookId + '">' +
-					'<td>' + currentBet.bet.bookId + '</td>' +
+                    '<td><button class=\'btn btn-default btn-xs\' id=\'button' + currentBet.bet.bookId + '\'>' +
+                    '<span class=\'glyphicon glyphicon-plus-sign\'></span></button>' +
+                    '<td>' + currentBet.bet.bookId + '</td>' +
 					'<td>' + currentBet.bracket.teamName + '</td>' +
 					'<td>' + currentBet.bet.betType + '</td>' +
 					'<td>' + currentBet.bet.spread_ml + '</td>' +
 					'<td>$' + currentBet.bet.amount + '</td>' +
-					'<td bgcolor="' + bgcolor + '">' + currentBet.resultString + '</td>' +
+					'<td style="background-color:' + statusColor(currentBet, true) + '">' + currentBet.resultString + '</td>' +
 					'</tr>'
 				);
+				$('#button' + currentBet.bet.bookId).on('click', function (e) { displayCompetitors(e) });
 			});
 			$('#betHeader').text('(Outlay: $' + currentOutlay +', Net Winnings: $' + (currentWinnings - currentOutlay).toFixed(2) + ')');
             $('#runningQuery').addClass('hide');
@@ -447,8 +460,10 @@ $(document).ready(function() {
     };
 
     function formatTimestamp(timestamp) {
-        var hours = timestamp.getHours();
-        var minutes = timestamp.getMinutes();
+
+        var localTime = new Date(timestamp.getTime() - (timestamp.getTimezoneOffset() * 60000));
+        var hours = localTime.getHours();
+        var minutes = localTime.getMinutes();
         var ampm = " AM";
         if (hours > 12) {
            hours -= 12;
@@ -456,6 +471,13 @@ $(document).ready(function() {
         }
         if (minutes < 10) minutes = "0" + minutes;
         return hours + ":" + minutes + ampm;
+    };
+
+    function winnerColor(currentGame, fav) {
+        var bgcolor = '#FFFFFF';
+        if (fav && currentGame.favScore > currentGame.undScore) bgcolor = '#FFD80D';
+        if (!fav && currentGame.favScore < currentGame.undScore) bgcolor = '#FFD80D';
+        return bgcolor;
     };
 
     function displayGameResults() {
@@ -468,46 +490,38 @@ $(document).ready(function() {
 			for (i = 0; i < games.length; i = i + 2) {
 			    var currentGame = games[i];
                 var timestamp = formatTimestamp(new Date(currentGame.timestamp));
-                var bgcolor = '#FFFFFF';
-                if (currentGame.favScore > currentGame.undScore) bgcolor = '#FFD80D';
 				$('#gamesLeft').append(
                     '<tr id="gameResult' + currentGame.favBookId + '">' +
 					'<td>' + currentGame.favBookId + '</td>' +
 					'<td>' + currentGame.favSeed + '</td>' +
 					'<td>' + currentGame.favName + '</td>' +
-					'<td bgcolor="' + bgcolor + '">' + currentGame.favScore  + '</td>' +
+					'<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
 					'<td>' + timestamp + '</td>' +
 					'</tr>');
-                bgcolor = '#FFFFFF';
-                if (currentGame.favScore < currentGame.undScore) bgcolor = '#FFD80D';
 				$('#gamesLeft').append(
                     '<tr id="gameResult' + currentGame.undBookId + '">' +
 					'<td>' + currentGame.undBookId+ '</td>' +
 					'<td>' + currentGame.undSeed + '</td>' +
 					'<td>' + currentGame.undName + '</td>' +
-					'<td bgcolor="' + bgcolor + '">' + currentGame.undScore  + '</td>' +
+					'<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
 					'</tr><tr><td/><td/><td/><td/></tr>');
 				if (i < games.length - 1) {
                     currentGame = games[i + 1];
                     timestamp = formatTimestamp(new Date(currentGame.timestamp));
-                    bgcolor = '#FFFFFF';
-                    if (currentGame.favScore > currentGame.undScore) bgcolor = '#FFD80D';
                     $('#gamesRight').append(
                         '<tr id="gameResult' + currentGame.favBookId + '">' +
                         '<td>' + currentGame.favBookId + '</td>' +
                         '<td>' + currentGame.favSeed + '</td>' +
                         '<td>' + currentGame.favName + '</td>' +
-                        '<td bgcolor="' + bgcolor + '">' + currentGame.favScore  + '</td>' +
+                        '<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
                         '<td>' + timestamp + '</td>' +
                         '</tr>');
-                    bgcolor = '#FFFFFF';
-                    if (currentGame.favScore < currentGame.undScore) bgcolor = '#FFD80D';
                     $('#gamesRight').append(
                         '<tr id="gameResult' + currentGame.undBookId + '">' +
                         '<td>' + currentGame.undBookId + '</td>' +
                         '<td>' + currentGame.undSeed + '</td>' +
                         '<td>' + currentGame.undName + '</td>' +
-                        '<td bgcolor="' + bgcolor + '">' + currentGame.undScore  + '</td>' +
+                        '<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
                         '</tr><tr><td/><td/><td/><td/></tr>');
                 }
             }

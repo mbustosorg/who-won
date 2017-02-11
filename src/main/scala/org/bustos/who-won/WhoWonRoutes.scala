@@ -79,6 +79,7 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   val routes = testRoute ~
     postBet ~
     bets ~
+    competition ~
     postGameResult ~
     betEntry ~
     bookIds ~
@@ -162,6 +163,25 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
         }
         }
       }}
+    }
+  }
+
+  @Path("competition")
+  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all players on a bet")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "bet", required = true, dataType = "integer", paramType = "path", value = "Bet ID")
+  ))
+  @ApiResponses(Array())
+  def competition = get {
+    pathPrefix("competition" / IntNumber / IntNumber) { (year, betID) =>
+      respondWithMediaType(`application/json`) { ctx =>
+        val future = whoWonData ? CompetitionRequest(year, betID)
+        future onSuccess {
+          case Competitors(list) => {
+            ctx.complete(list.toJson.toString)
+          }
+        }
+      }
     }
   }
 
