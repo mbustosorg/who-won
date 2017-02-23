@@ -94,10 +94,20 @@ class WhoWonData extends Actor with ActorLogging {
       case Some(result) =>
         val score = {
           if (bet.betType == StraightBet) {
-            result.score - result.opposingScore + bet.spread_ml
-          } else {
-            result.score - result.opposingScore
-          }
+            result.finalScore - result.opposingFinalScore + bet.spread_ml
+          } else if (bet.betType == MoneylineBet) {
+            result.finalScore - result.opposingFinalScore
+          } else if (bet.betType == FirstTo15Moneyline) {
+            if (result.firstTo15) 1 else -1
+          } else if (bet.betType == FirstHalfStraight) {
+            result.firstHalfScore - result.opposingFirstHalfScore + bet.spread_ml
+          } else if (bet.betType == FirstHalfMoneyline) {
+            result.firstHalfScore - result.opposingFirstHalfScore
+          } else if (bet.betType == SecondHalfStraight) {
+            (result.finalScore - result.firstHalfScore) - (result.opposingFinalScore - result.opposingFirstHalfScore) + bet.spread_ml
+          } else if (bet.betType == SecondHalfMoneyline) {
+            (result.finalScore - result.firstHalfScore) - (result.opposingFinalScore - result.opposingFirstHalfScore)
+          } else 0
         }
         val resultType = {
           if (score > 0) "Win"
@@ -105,7 +115,7 @@ class WhoWonData extends Actor with ActorLogging {
           else "Push"
         }
         val winnings = {
-          if (bet.betType == StraightBet) {
+          if (bet.betType == StraightBet || bet.betType == FirstHalfStraight || bet.betType == SecondHalfStraight) {
             if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
             else if (resultType == "Lose") 0.0
             else bet.amount
@@ -159,7 +169,8 @@ class WhoWonData extends Actor with ActorLogging {
     case result: GameResult =>
       db.withSession { implicit session =>
         resultsTable += result
-        resultsTable += GameResult(result.year, result.opposingBookId, result.opposingScore, result.bookId, result.score, result.resultTimeStamp)
+        resultsTable += GameResult(result.year, result.opposingBookId, result.opposingFinalScore, result.opposingFirstHalfScore,
+          result.bookId, result.finalScore, result.firstHalfScore, result.firstTo15, result.resultTimeStamp)
       }
       sender ! ResultSubmitted
     case MissingGameResultsRequest(year) =>
@@ -179,11 +190,12 @@ class WhoWonData extends Actor with ActorLogging {
           c <- bracketsTable if c.year === year
           s <- resultsTable if c.bookId === s.bookId && s.bookId < s.opposingBookId && s.year === year
           d <- bracketsTable if s.opposingBookId === d.bookId && d.year === year
-        } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName, s.score, s.opposingScore, s.resultTimeStamp))
-          .sortBy(_._7.desc)
+        } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName,
+          s.finalScore, s.opposingFinalScore, s.firstHalfScore, s.opposingFirstHalfScore, s.resultTimeStamp))
+          .sortBy(_._9.desc)
           .list
         .map({ x =>
-          GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9.toDateTime(LocalTimeZone))
+          GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11.toDateTime(LocalTimeZone))
         })
       }
       sender ! GameResults(gameResults)

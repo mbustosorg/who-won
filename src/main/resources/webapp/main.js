@@ -334,17 +334,22 @@ $(document).ready(function() {
     $('#resultsSubmit').click(function() {
         var bookId = $('#resultsBookId').val().split(' ')[0];
         var selectedScore = $('#selectedScore').val();
+        var selectedFirstHalfScore = $('#selectedFirstHalfScore').val();
         var opposingBookId = $('#resultsOpposingBookId').val().split(' ')[0];
         var opposingScore = $('#opposingScore').val();
+        var opposingFirstHalfScore = $('#opposingFirstHalfScore').val();
         var timestamp = (new Date()).toISOString();
         if (bookId == opposingBookId) {
         } else {
             $('#resultsRunningQuery').removeClass('hide');
             var gameResult = '{\"year\": ' +
-                year() + ', \"bookId\": ' +
-                bookId + ', \"score\": ' + selectedScore + ', \"opposingBookId\": ' +
-                opposingBookId + ', \"opposingScore\": ' + opposingScore + ', \"resultTimeStamp\": \"' +
-                timestamp + '\"}';
+                year() + ', \"bookId\": ' + bookId +
+                ', \"finalScore\": ' + selectedScore +
+                ', \"firstHalfScore\": ' + selectedFirstHalfScore +
+                ', \"opposingBookId\": ' + opposingBookId +
+                ', \"opposingFinalScore\": ' + opposingScore +
+                ', \"opposingFirstHalfScore\": ' + opposingFirstHalfScore +
+                ', \"resultTimeStamp\": \"' + timestamp + '\"}';
             $.ajax({
                 type: "POST",
                 url: '/games/' + year(),
@@ -402,30 +407,41 @@ $(document).ready(function() {
 
     function displayCompetitors(e) {
         var bet = e.currentTarget.id.replace('button', '');
-        $.ajax({
-            type: "GET",
-            url: '/competition/' + year() + '/' + bet,
-            cache: false
-        }).done (function (bets) {
-            var newTable = '';
-            var userName = getCookie("WHOWON_USER");
-            $.each(bets, function(key, currentBet) {
-                if (userName != currentBet.bet.userName) {
-                    newTable = newTable +
-                        '<tr id="competitors_' + bet + '_' + i + '">' +
-                        '<td></td>' +
-                        '<td>' + currentBet.bet.userName + '</td>' +
-                        '<td>' + currentBet.bracket.teamName + '</td>' +
-                        '<td>' + currentBet.bet.betType + '</td>' +
-                        '<td>' + currentBet.bet.spread_ml + '</td>' +
-                        '<td>$' + currentBet.bet.amount + '</td>' +
-                        '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
-                        '</tr>';
-                };
+        var span = $('#' + e.currentTarget.id + ' span');
+        if (span.hasClass('glyphicon-plus')) {
+            span.removeClass('glyphicon-plus');
+            span.addClass('glyphicon-minus');
+            $.ajax({
+                type: "GET",
+                url: '/competition/' + year() + '/' + bet,
+                cache: false
+            }).done (function (bets) {
+                var newTable = '';
+                var userName = getCookie("WHOWON_USER");
+                $.each(bets, function(key, currentBet) {
+                    if (userName != currentBet.bet.userName) {
+                        newTable = newTable +
+                            '<tr id="competitors_' + bet + '_' + i + '">' +
+                            '<td></td>' +
+                            '<td>' + currentBet.bet.userName + '</td>' +
+                            '<td>' + currentBet.bracket.teamName + '</td>' +
+                            '<td>' + currentBet.bet.betType + '</td>' +
+                            '<td>' + currentBet.bet.spread_ml + '</td>' +
+                            '<td>$' + currentBet.bet.amount + '</td>' +
+                            '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
+                            '</tr>';
+                    };
+                });
+                $('.glyphicon-minus').addClass('glyphicon-plus');
+                $('.glyphicon-minus').removeClass('glyphicon-minus');
+                $('[id^=competitors]').remove();
+                $('#bets' + bet).after(newTable);
             });
+        } else {
+            span.addClass('glyphicon-plus');
+            span.removeClass('glyphicon-minus');
             $('[id^=competitors]').remove();
-            $('#bets' + bet).after(newTable);
-        });
+        }
     };
 
     function displayCurrentBets() {
@@ -443,7 +459,7 @@ $(document).ready(function() {
 				$('#bets_table_body').append(
                     '<tr id="bets' + currentBet.bet.bookId + '">' +
                     '<td><button class=\'btn btn-default btn-xs\' id=\'button' + currentBet.bet.bookId + '\'>' +
-                    '<span class=\'glyphicon glyphicon-plus-sign\'></span></button>' +
+                    '<span id=\'button' + currentBet.bet.bookId + 'span\' class=\'glyphicon glyphicon-plus\'></span></button>' +
                     '<td>' + currentBet.bet.bookId + '</td>' +
 					'<td>' + currentBet.bracket.teamName + '</td>' +
 					'<td>' + currentBet.bet.betType + '</td>' +
@@ -495,6 +511,7 @@ $(document).ready(function() {
 					'<td>' + currentGame.favBookId + '</td>' +
 					'<td>' + currentGame.favSeed + '</td>' +
 					'<td>' + currentGame.favName + '</td>' +
+					'<td>' + currentGame.favFirstHalfScore + '</td>' +
 					'<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
 					'<td>' + timestamp + '</td>' +
 					'</tr>');
@@ -503,6 +520,7 @@ $(document).ready(function() {
 					'<td>' + currentGame.undBookId+ '</td>' +
 					'<td>' + currentGame.undSeed + '</td>' +
 					'<td>' + currentGame.undName + '</td>' +
+					'<td>' + currentGame.undFirstHalfScore + '</td>' +
 					'<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
 					'</tr><tr><td/><td/><td/><td/></tr>');
 				if (i < games.length - 1) {
@@ -513,6 +531,7 @@ $(document).ready(function() {
                         '<td>' + currentGame.favBookId + '</td>' +
                         '<td>' + currentGame.favSeed + '</td>' +
                         '<td>' + currentGame.favName + '</td>' +
+    					'<td>' + currentGame.favFirstHalfScore + '</td>' +
                         '<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
                         '<td>' + timestamp + '</td>' +
                         '</tr>');
@@ -521,6 +540,7 @@ $(document).ready(function() {
                         '<td>' + currentGame.undBookId + '</td>' +
                         '<td>' + currentGame.undSeed + '</td>' +
                         '<td>' + currentGame.undName + '</td>' +
+     					'<td>' + currentGame.undFirstHalfScore + '</td>' +
                         '<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
                         '</tr><tr><td/><td/><td/><td/></tr>');
                 }

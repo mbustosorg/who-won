@@ -34,12 +34,20 @@ object WhoWonTables {
   // Constants
   val StraightBet = "ST"
   val MoneylineBet = "ML"
+  val FirstTo15Moneyline = "15ML"
+  val FirstHalfStraight = "H1ST"
+  val SecondHalfStraight = "H2ST"
+  val FirstHalfMoneyline = "H1ML"
+  val SecondHalfMoneyline = "H2ML"
+
   val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
   // Base case classes
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
   case class Bracket(bookId: Int, opposingBookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
-  case class GameResult(year: Int, bookId: Int, score: Int, opposingBookId: Int, opposingScore: Int, resultTimeStamp: DateTime)
+  case class GameResult(year: Int, bookId: Int, finalScore: Int, firstHalfScore: Int,
+                        opposingBookId: Int, opposingFinalScore: Int, opposingFirstHalfScore: Int,
+                        firstTo15: Boolean, resultTimeStamp: DateTime)
   case object YearsRequest
   // Utility case classes
   case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
@@ -47,7 +55,12 @@ object WhoWonTables {
   case class Bets(list: List[BetDisplay])
   case class GameResultsRequest(year: Int)
   case class MissingGameResultsRequest(year: Int)
-  case class GameResultDisplay(favBookId: Int, undBookId: Int, favSeed: Int, undSeed: Int, favName: String, undName: String, favScore: Int, undScore: Int, timestamp: DateTime)
+  case class GameResultDisplay(favBookId: Int, undBookId: Int,
+                               favSeed: Int, undSeed: Int,
+                               favName: String, undName: String,
+                               favScore: Int, undScore: Int,
+                               favFirstHalfScore: Int, undFirstHalfScore: Int,
+                               timestamp: DateTime)
   case class GameResults(list: List[GameResultDisplay])
   case class PlayerIdRequest(userName: String)
   case class BookIdsRequest(year: Int)
@@ -74,6 +87,7 @@ object WhoWonTables {
   val resultsTable = TableQuery[ResultsTable]
 
   val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
+  val ccyyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
   implicit def dateTime =
@@ -106,13 +120,13 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
   implicit val bet = jsonFormat7(Bet)
   implicit val bracket = jsonFormat7(Bracket)
   implicit val player = jsonFormat5(Player)
-  implicit val result = jsonFormat6(GameResult)
+  implicit val result = jsonFormat9(GameResult)
   // Utility case classes
   implicit val betDisplay = jsonFormat4(BetDisplay)
   implicit val betsRequest = jsonFormat2(BetsRequest)
   implicit val bets = jsonFormat1(Bets)
   implicit val gameResultsRequest = jsonFormat1(GameResultsRequest)
-  implicit val gameResultDisplay = jsonFormat9(GameResultDisplay)
+  implicit val gameResultDisplay = jsonFormat11(GameResultDisplay)
   implicit val gameResults = jsonFormat1(GameResults)
   implicit val bookIdsRequest = jsonFormat1(BookIdsRequest)
   implicit val bookIdsResults = jsonFormat1(BookIdsResults)
@@ -166,10 +180,14 @@ class ResultsTable(tag: Tag) extends Table[WhoWonTables.GameResult](tag, "result
 
   def year = column[Int]("year")
   def bookId = column[Int]("bookId")
-  def score = column[Int]("score")
+  def finalScore = column[Int]("finalScore")
+  def firstHalfScore = column[Int]("firstHalfScore")
   def opposingBookId = column[Int]("opposingBookId")
-  def opposingScore = column[Int]("opposingScore")
+  def opposingFinalScore = column[Int]("opposingFinalScore")
+  def opposingFirstHalfScore = column[Int]("opposingFirstHalfScore")
+  def firstTo15 = column[Boolean]("firstTo15")
   def resultTimeStamp = column[DateTime]("resultTimeStamp")
 
-  def * = (year, bookId, score, opposingBookId, opposingScore, resultTimeStamp) <> (WhoWonTables.GameResult.tupled, WhoWonTables.GameResult.unapply)
+  def * = (year, bookId, finalScore, firstHalfScore, opposingBookId, opposingFinalScore, opposingFirstHalfScore, firstTo15, resultTimeStamp) <>
+    (WhoWonTables.GameResult.tupled, WhoWonTables.GameResult.unapply)
 }

@@ -27,10 +27,15 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.github.tototoshi.csv._
 import com.typesafe.config.ConfigFactory
+import org.bustos.whowon.WhoWonTables.Bracket
 import spray.can.Http
 
 import scala.concurrent.duration._
 import scala.util.Properties.envOrElse
+import WhoWonData._
+import WhoWonTables._
+
+import scala.slick.driver.MySQLDriver.simple._
 
 object WhoWon extends App {
 
@@ -51,11 +56,49 @@ object WhoWon extends App {
     else IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
   }
 
-  def initializeData = {
-    import WhoWonData._
-    import WhoWonTables._
+  def importBrackets(year: Int) = {
 
-    import scala.slick.driver.MySQLDriver.simple._
+    db.withSession { implicit session =>
+      bracketsTable.filter(_.year === year).delete
+      val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
+      reader.allWithHeaders.foreach(fields => {
+        println(fields)
+        val timestamp = {
+          try {
+            formatter.parseDateTime(fields("gameTime"))
+          } catch {
+            case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+          }
+        }
+        bracketsTable += Bracket(fields("bookId").toInt, fields("opposingBookId").toInt, fields("year").toInt,
+          fields("region"), fields("seed").toInt, fields("teamName"), timestamp)
+      })
+    }
+  }
+
+  def importResults(year: Int) = {
+
+    db.withSession { implicit session =>
+      resultsTable.filter(_.year === year).delete
+      val reader = CSVReader.open(new File("data/" + year + "/results.csv"))
+      reader.allWithHeaders.foreach(fields => {
+        println(fields)
+        val timestamp = {
+          try {
+            formatter.parseDateTime(fields("resultTimeStamp"))
+          } catch {
+            case _: Exception => ccyyFormatter.parseDateTime(fields("resultTimeStamp"))
+          }
+        }
+        resultsTable += GameResult(fields("year").toInt,
+          fields("bookId").toInt, fields("finalScore").toInt, fields("firstHalfScore").toInt,
+          fields("opposingBookId").toInt, fields("opposingFinalScore").toInt, fields("opposingFirstHalfScore").toInt,
+          fields("firstTo15").toBoolean, timestamp)
+      })
+    }
+  }
+
+  def initializeData = {
 
     db.withSession { implicit session =>
       playersTable.delete
@@ -65,46 +108,13 @@ object WhoWon extends App {
         playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
       })
     }
-    db.withSession { implicit session =>
-      bracketsTable.filter(_.year === 2015).delete
-      val reader = CSVReader.open(new File("data/2015brackets.csv"))
-      reader.foreach(fields => {
-        println(fields)
-        if (fields(0) != "bookId") {
-          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3), fields(4).toInt, fields(5), formatter.parseDateTime(fields(6)))
-        }
-      })
-    }
-    db.withSession { implicit session =>
-      resultsTable.filter(_.year === 2015).delete
-      val reader = CSVReader.open(new File("data/2015results.csv"))
-      reader.foreach(fields => {
-        println(fields)
-        if (fields(0) != "bookId") {
-          resultsTable += GameResult(fields(1).toInt, fields(0).toInt, fields(2).toInt, fields(3).toInt, fields(4).toInt, formatter.parseDateTime(fields(5)))
-        }
-      })
-    }
-    db.withSession { implicit session =>
-      bracketsTable.filter(_.year === 2016).delete
-      val reader = CSVReader.open(new File("data/2016brackets.csv"))
-      reader.foreach(fields => {
-        println(fields)
-        if (fields(0) != "bookId") {
-          bracketsTable += Bracket(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3), fields(4).toInt, fields(5), formatter.parseDateTime(fields(6)))
-        }
-      })
-    }
-    db.withSession { implicit session =>
-      resultsTable.filter(_.year === 2016).delete
-      val reader = CSVReader.open(new File("data/2016results.csv"))
-      reader.foreach(fields => {
-        println(fields)
-        if (fields(0) != "bookId") {
-          resultsTable += GameResult(fields(1).toInt, fields(0).toInt, fields(2).toInt, fields(3).toInt, fields(4).toInt, formatter.parseDateTime(fields(5)))
-        }
-      })
-    }
+
+    importBrackets(2015)
+    importResults(2015)
+    importBrackets(2016)
+    importResults(2016)
+    importBrackets(2017)
+    importResults(2017)
   }
 
   doMain
