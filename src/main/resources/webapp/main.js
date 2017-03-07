@@ -194,12 +194,16 @@ $(document).ready(function() {
         }).done(function(results) {
             $('#resultsBookId').empty();
             $('#resultsOpposingBookId').empty();
+            $('#firstTo15').empty();
             $.each(results, function(key, currentGame) {
                 var labelString = currentGame.bookId + ' - ' + currentGame.teamName;
                 $('#resultsBookId').append(
                     '<option value =\"' + labelString + '\">' + labelString + '</option>'
                 );
                 $('#resultsOpposingBookId').append(
+                    '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                );
+                $('#firstTo15').append(
                     '<option value =\"' + labelString + '\">' + labelString + '</option>'
                 );
             });
@@ -338,10 +342,13 @@ $(document).ready(function() {
         var opposingBookId = $('#resultsOpposingBookId').val().split(' ')[0];
         var opposingScore = $('#opposingScore').val();
         var opposingFirstHalfScore = $('#opposingFirstHalfScore').val();
+        var firstTo15 = $('#firstTo15').val().split(' ')[0];
         var timestamp = (new Date()).toISOString();
         if (bookId == opposingBookId) {
         } else {
             $('#resultsRunningQuery').removeClass('hide');
+            var favFirst = true;
+            if (firstTo15 != bookId) favFirst = false;
             var gameResult = '{\"year\": ' +
                 year() + ', \"bookId\": ' + bookId +
                 ', \"finalScore\": ' + selectedScore +
@@ -349,7 +356,8 @@ $(document).ready(function() {
                 ', \"opposingBookId\": ' + opposingBookId +
                 ', \"opposingFinalScore\": ' + opposingScore +
                 ', \"opposingFirstHalfScore\": ' + opposingFirstHalfScore +
-                ', \"resultTimeStamp\": \"' + timestamp + '\"}';
+                ', \"resultTimeStamp\": \"' + timestamp + '\"' +
+                ', \"firstTo15\": \"' + favFirst + '\"}';
             $.ajax({
                 type: "POST",
                 url: '/games/' + year(),
@@ -432,8 +440,6 @@ $(document).ready(function() {
                             '</tr>';
                     };
                 });
-                $('.glyphicon-minus').addClass('glyphicon-plus');
-                $('.glyphicon-minus').removeClass('glyphicon-minus');
                 $('[id^=competitors]').remove();
                 $('#bets' + bet).after(newTable);
             });
