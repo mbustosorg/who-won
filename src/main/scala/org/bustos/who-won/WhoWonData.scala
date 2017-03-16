@@ -177,11 +177,13 @@ class WhoWonData extends Actor with ActorLogging {
       val gameResults = db.withSession { implicit session =>
         (for {
           (c, s) <- bracketsTable.filter(_.year === year) leftJoin resultsTable.filter(_.year === year) on (_.bookId === _.bookId)
-        } yield (c.bookId, c.opposingBookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?))
+        } yield (c.bookId, c.opposingBookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?,
+          c.firstHalf, c.secondHalf, c.firstTo15, c.opposingFirstHalf, c.opposingSecondHalf, c.opposingFirstTo15))
           .filter(_._8.isEmpty)
           .sortBy(_._1)
           .list
-          .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6, x._7.toDateTime(LocalTimeZone))})
+          .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6, x._7.toDateTime(LocalTimeZone),
+            x._9, x._10, x._11, x._12, x._13, x._14)})
       }
       sender ! BookIdsResults(gameResults)
     case GameResultsRequest(year) =>

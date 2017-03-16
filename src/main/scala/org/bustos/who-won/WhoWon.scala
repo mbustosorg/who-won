@@ -71,7 +71,9 @@ object WhoWon extends App {
           }
         }
         bracketsTable += Bracket(fields("bookId").toInt, fields("opposingBookId").toInt, fields("year").toInt,
-          fields("region"), fields("seed").toInt, fields("teamName"), timestamp)
+          fields("region"), fields("seed").toInt, fields("teamName"), timestamp,
+          fields("firstHalf").toInt, fields("secondHalf").toInt, fields("firstTo15").toInt,
+          fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
       })
     }
   }
@@ -81,7 +83,7 @@ object WhoWon extends App {
     db.withSession { implicit session =>
       resultsTable.filter(_.year === year).delete
       val reader = CSVReader.open(new File("data/" + year + "/results.csv"))
-      reader.allWithHeaders.foreach(fields => {
+      reader.allWithHeaders.filter { fields => !fields("year").isEmpty } foreach(fields => {
         println(fields)
         val timestamp = {
           try {

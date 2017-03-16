@@ -43,7 +43,8 @@ object WhoWonTables {
   val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
   // Base case classes
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
-  case class Bracket(bookId: Int, opposingBookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime)
+  case class Bracket(bookId: Int, opposingBookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime,
+                     firstHalf: Int, secondHalf: Int, firstTo15: Int, opposingFirstHalf: Int, opposingSecondHalf: Int, opposingFirstTo15: Int)
   case class Player(id: Int, userName: String, firstName: String, lastName: String, nickname: String)
   case class GameResult(year: Int, bookId: Int, finalScore: Int, firstHalfScore: Int,
                         opposingBookId: Int, opposingFinalScore: Int, opposingFirstHalfScore: Int,
@@ -118,7 +119,7 @@ object WhoWonJsonProtocol extends DefaultJsonProtocol {
 
   // Base case classes
   implicit val bet = jsonFormat7(Bet)
-  implicit val bracket = jsonFormat7(Bracket)
+  implicit val bracket = jsonFormat13(Bracket)
   implicit val player = jsonFormat5(Player)
   implicit val result = jsonFormat9(GameResult)
   // Utility case classes
@@ -160,8 +161,15 @@ class BracketsTable(tag: Tag) extends Table[WhoWonTables.Bracket](tag, "brackets
   def seed = column[Int]("seed")
   def teamName = column[String]("teamName")
   def gameTime = column[DateTime]("gameTime")
+  def firstHalf = column[Int]("firstHalf")
+  def secondHalf = column[Int]("secondHalf")
+  def firstTo15 = column[Int]("firstTo15")
+  def opposingFirstHalf = column[Int]("opposingFirstHalf")
+  def opposingSecondHalf = column[Int]("opposingSecondHalf")
+  def opposingFirstTo15 = column[Int]("opposingFirstTo15")
 
-  def * = (bookId, opposingBookId, year, region, seed, teamName, gameTime) <> (WhoWonTables.Bracket.tupled, WhoWonTables.Bracket.unapply)
+  def * = (bookId, opposingBookId, year, region, seed, teamName, gameTime, firstHalf, secondHalf, firstTo15,
+    opposingFirstHalf, opposingSecondHalf, opposingFirstTo15) <> (WhoWonTables.Bracket.tupled, WhoWonTables.Bracket.unapply)
 }
 
 class PlayersTable(tag: Tag) extends Table[WhoWonTables.Player](tag, "players") {
