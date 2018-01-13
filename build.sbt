@@ -6,7 +6,7 @@ packageArchetype.java_application
 lazy val commonSettings = Seq(
    organization := "org.bustos",
    version := "0.1.0",
-   scalaVersion := "2.11.4"
+   scalaVersion := "2.11.7"
 )
 
 lazy val mainProject = (project in file("."))
@@ -37,7 +37,7 @@ val projectLibraries = Seq(
     "log4j"                   %  "log4j"           % "1.2.14",
     "org.slf4j"               %  "slf4j-api"       % slf4jV,
     "org.slf4j"               %  "slf4j-simple"    % slf4jV,
-    "mysql"                   %  "mysql-connector-java" % "latest.release",
+    "mysql"                   %  "mysql-connector-java" % "5.1.39",
     "joda-time"               %  "joda-time"       % "2.7",
     "org.joda"                %  "joda-convert"    % "1.2",
     "com.github.tototoshi"    %% "scala-csv"       % "1.2.2"
