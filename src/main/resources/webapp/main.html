@@ -59,35 +59,43 @@
             <li class="list-group-item" style="border: 0">
                 <div class="form-horizontal" id='manualEntryTab'>
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">Type</label>
-                        <div class="col-sm-8">
-                            <label class="radio-inline"><input type="radio" name="optradio" checked>Game</label>
-                            <label class="radio-inline"><input type="radio" name="optradio">1st H</label>
-                            <label class="radio-inline"><input type="radio" name="optradio">2nd H</label>
-                            <label class="radio-inline"><input type="radio" name="optradio">1st 15</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
                         <label class="col-sm-4 control-label">Sportsbook ID</label>
                         <div class="col-sm-8">
                             <select class="form-control" id="bookId">
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class='tab-content'>
-                            <div id='straightPane' class='tab-pane fade in active'>
-                                <label class="col-sm-4 control-label">Spread</label>
+                    <div class='tab-content'>
+                        <div id='straightPane' class='tab-pane fade in active'>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label" id="spread-label">Spread</label>
                                 <div class="col-sm-8">
                                     <select class="form-control" id="spreadAmount">
                                     </select>
                                 </div>
                             </div>
-                            <div id='moneylinePane' class='tab-pane fade'>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Type</label>
+                                <div class="col-sm-8">
+                                    <label class="radio-inline"><input type="radio" name="opt-sb-radio" id="opt-sb-game" checked>Game</label>
+                                    <label class="radio-inline"><input type="radio" name="opt-sb-radio" id="opt-sb-overunder">Over / Under</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id='moneylinePane' class='tab-pane fade'>
+                            <div class="form-group">
                                 <label class="col-sm-4 control-label">Moneyline</label>
                                 <div class="col-sm-8">
                                     <select class="form-control" id="moneyline">
                                     </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Type</label>
+                                <div class="col-sm-8">
+                                    <label class="radio-inline"><input type="radio" name="opt-ml-radio" id="opt-ml-game" checked>Game</label>
+                                    <label class="radio-inline"><input type="radio" name="opt-ml-radio" id="opt-ml-first-half">1st Half</label>
+                                    <label class="radio-inline"><input type="radio" name="opt-ml-radio" id="opt-ml-first-to-15" >1st to 15</label>
                                 </div>
                             </div>
                         </div>

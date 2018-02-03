@@ -188,6 +188,16 @@ $(document).ready(function() {
         });
     });
 
+    $('#opt-sb-overunder').click(function() {
+        updateSpread(50.0, 300.0);
+        $('#spread-label').text('O/U');
+    });
+
+    $('#opt-sb-game').click(function() {
+        updateSpread(-40.0, 40.0);
+        $('#spread-label').text('Spread');
+    });
+
     function updateMissingResults() {
         $.ajax({
             url: '/games/' + year() + '/missing'
@@ -383,9 +393,17 @@ $(document).ready(function() {
         var betType = '';
         if ($('#moneylinePane').hasClass('active')) {
             betType = 'ML';
+            if ($('#opt-ml-first-half')[0].checked) {
+                betType = betType + '-1H';
+            } else if ($('#opt-ml-first-to-15')[0].checked) {
+                betType = betType + '-15';
+            }
             spreadMlAmount = $('#moneyline').val();
         } else {
             betType = 'ST';
+            if ($('#opt-sb-overunder')[0].checked) {
+                betType = betType + '-OU';
+            }
             spreadMlAmount = $('#spreadAmount').val();
         }
         var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\", \"timestamp\": \"' + (new Date()).toISOString() + '\"}';
@@ -482,7 +500,6 @@ $(document).ready(function() {
     };
 
     function formatTimestamp(timestamp) {
-
         var localTime = new Date(timestamp.getTime() - (timestamp.getTimezoneOffset() * 60000));
         var hours = localTime.getHours();
         var minutes = localTime.getMinutes();
@@ -609,6 +626,15 @@ $(document).ready(function() {
 		});
     };
 
+    function updateSpread(lower, upper) {
+    	$('#spreadAmount').empty();
+		for (i = lower; i < upper; i = i + 0.5) {
+		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
+            if (i == 0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
+			$('#spreadAmount').append(currentValue);
+		}
+	}
+
     function populateBookIds() {
         $.ajax({
             url: '/bookIds/' + year(),
@@ -622,14 +648,9 @@ $(document).ready(function() {
 				);
  			});
 		});
-    	$('#spreadAmount').empty();
-		for (i = -40.0; i < 40; i = i + 0.5) {
-		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
-            if (i == 0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
-			$('#spreadAmount').append(currentValue);
-		}
+		updateSpread(-40.0, 40.0);
     	$('#moneyline').empty();
-		for (i = -2000.0; i <= 2000; i = i + 10) {
+		for (i = -2000.0; i <= 2000.0; i = i + 10) {
 		    if (i <= -100.0 || i >= 100.0) {
      		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
                 if (i == 100.0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
