@@ -23,6 +23,9 @@ import java.io.{File, FileOutputStream}
 
 import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
+import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.PutObjectRequest
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -41,7 +44,7 @@ object WhoWonData {
   val WestCoastId = "America/Los_Angeles"
   val LocalTimeZone = DateTimeZone.forID(WestCoastId)
   val hhmmssFormatter = DateTimeFormat.forPattern("hh:mm:ss a")
-  val filedateFormatter = DateTimeFormat.forPattern("yyyymmddhhmmss")
+  val filedateFormatter = DateTimeFormat.forPattern("yyyyMMdd_HHmmss")
 
   val db = {
     val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon")
@@ -49,6 +52,11 @@ object WhoWonData {
     val mysqlPassword = envOrElse("WHOWON_MYSQL_PASSWORD", "")
     Database.forURL(mysqlURL, driver = "com.mysql.jdbc.Driver", user = mysqlUser, password = mysqlPassword)
   }
+
+  val s3 = new AmazonS3Client;
+  val usWest2 = Region.getRegion(Regions.US_WEST_2)
+  val S3bucket = "who-won-tickets"
+
 }
 
 class WhoWonData extends Actor with ActorLogging {
@@ -250,7 +258,10 @@ class WhoWonData extends Actor with ActorLogging {
       if (player.isEmpty) sender ! UnknownPlayer
       else sender ! player.head
     case TicketImage(name, image) =>
-      val decodedString = image.decodeString("ISO_8859_1").split(',').tail.head
+      logger.info("Storing image for " + name)
+      val decodedString = image.decodeString("ISO_8859_1").replaceAll("\"", "")
+      val destinationDirectory = new File(TicketImageDestination)
+      if (!destinationDirectory.exists) destinationDirectory.mkdir
       val directory = new File(TicketImageDestination + name)
       if (!directory.exists) directory.mkdir
       val dateString = filedateFormatter.print(new DateTime)
@@ -259,7 +270,9 @@ class WhoWonData extends Actor with ActorLogging {
       val decodedStream = new FileOutputStream(decodedFile)
       decodedStream.write(decoded)
       decodedStream.close()
-      sender ! "tickets/" + name + "/ticket_" + dateString + ".png"
+      val key = name + "/ticket_" + dateString + ".png"
+      s3.putObject(new PutObjectRequest(S3bucket, key, decodedFile))
+      sender ! key
     case BetProfilesRequest(year) =>
       val betCounts: List[(String, Double, Int)] = db.withSession { implicit session =>
         betsTable

@@ -114,7 +114,8 @@
                             <video id="snapVideo" width="500"></video>
                         </div>
                         <div id='mobilePhoto' class='hide'>
-                            <input id='mobileInputPhoto' type="file" accept="image/*">
+                            <label for='fileInput'>Press 'Choose File' to open camera</label>
+                            <input id='mobileInputPhoto' type="file" name='fileInput' accept="image/*">
                         </div>
                     </div>
                     <div class="form-group hide" id='snapButtons'>
@@ -296,7 +297,6 @@
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script src='https://cdn.rawgit.com/naptha/tesseract.js/0.2.0/dist/tesseract.js'></script>
 <script type="text/javascript" src="./main.js"></script>
 </body>
 </html>

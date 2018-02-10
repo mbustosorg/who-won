@@ -41,21 +41,38 @@ $(document).ready(function() {
     }
 
 	var video = document.getElementById("snapVideo");
-    var videoObj = { video: true };
-    var videoAudioObj = { video: true, audio: true };
+    var constraints = { audio: false, video: true };
     var webcamStream = null;
 
     function startVideo() {
         if (webcamStream == null) {
-            errBack = function(error) {
+            function errBack(message, error) {
                 console.log("Video capture error: ", error.code);
             };
             if(navigator.getUserMedia) { // Standard
+                navigator.mediaDevices.getUserMedia(constraints)
+                  .then(function(stream) {
+                    var videoTracks = stream.getVideoTracks();
+                    console.log('Got stream with constraints:', constraints);
+                    console.log('Using video device: ' + videoTracks[0].label);
+                    stream.onended = function() {
+                      console.log('Stream ended');
+                    };
+                    stream.oninactive = function() {
+                      console.log('Stream inactive');
+                    };
+                    window.stream = stream; // make variable available to console
+                    video.srcObject = stream;
+                    webcamStream = stream;
+                  })
+                  .catch(errBack);
+/*
                 navigator.getUserMedia(videoObj, function(stream) {
                     webcamStream = stream;
                     video.src = stream;
                     video.play();
                 }, errBack);
+                */
             } else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
                 navigator.webkitGetUserMedia(videoObj, function(stream){
                     webcamStream = stream;
@@ -86,19 +103,18 @@ $(document).ready(function() {
 
     $('#snapButton').click(function() {
         $('video').addClass('hide');
-        stopVideo();
         var newCanvas = document.createElement("canvas");
         newCanvas.width = video.videoWidth;
         newCanvas.height = video.videoHeight;
-        newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
+        var height = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
+        var width = $('#photoPage')[0].offsetWidth;
+        newCanvas.getContext('2d').drawImage(video, 0, 0,  width, height);
         var img = new Image();
         img.src = newCanvas.toDataURL();
         img.id = 'snapImage';
+        $('#snapImage').remove();
         $('#photoPage').prepend(img);
-        $('#snapImage').css('width','300');
-        Tesseract.recognize(img)
-                 .progress(function  (p) { console.log('progress', p)    })
-                 .then(function (result) { console.log('result', result) })
+        stopVideo();
     });
 
     $('#snapRetakeButton').click(function() {
@@ -114,7 +130,12 @@ $(document).ready(function() {
             if ($('#snapImage') != null) $('#snapImage').remove();
             var img = new Image();
             img.src = e.target.result;
+            var height = img.height / img.width * $('#photoPage')[0].offsetWidth;
+            var width = $('#photoPage')[0].offsetWidth;
+            img.width = width;
+            img.height = height;
             img.id = 'snapImage';
+            $('#snapImage').remove();
             $('#photoPage').prepend(img);
         };
         reader.readAsDataURL(this.files[0]);
@@ -332,14 +353,25 @@ $(document).ready(function() {
         }
     };
 
+    function getBase64Image(imgElem) {
+        var canvas = document.createElement("canvas");
+        canvas.width = imgElem.naturalWidth;
+        canvas.height = imgElem.naturalHeight;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(imgElem, 0, 0);
+        var dataURL = canvas.toDataURL("image/png");
+        return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+    };
+
     $('#betSubmit').click(function() {
         if ($('#photoPage').hasClass('hide')) submitBet();
         else {
+           var imgData = JSON.stringify(getBase64Image($('#snapImage')[0]));
             $.ajax({
                 type: "POST",
                 url: '/ticket',
                 dataType: 'json',
-                data: $('#snapImage').attr('src')
+                data: imgData
             }).done(function(results) {
             });
         }
