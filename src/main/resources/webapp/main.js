@@ -46,8 +46,13 @@ $(document).ready(function() {
 
     function startVideo() {
         if (webcamStream == null) {
-            function errBack(message, error) {
-                console.log("Video capture error: ", error.code);
+            function errBack(message) {
+                if (message == "Permission denied") {
+                    window.alert("Grant access to your camera for this site")
+                } else {
+                    window.alert("Make sure you are accessing this site using https")
+                }
+                console.log("Video capture error: ", message);
             };
             if(navigator.getUserMedia) { // Standard
                 navigator.mediaDevices.getUserMedia(constraints)

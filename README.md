@@ -11,8 +11,12 @@ To run it for your own deployment you will need to set the following ENV variabl
 * WHOWON_MYSQL_PASSWORD
 * WHOWON_USER_PASSWORDS
 * WHOWON_HOUSE_TAKE
+* AWS_ACCESS_KEY_ID
+* AWS_SECRET_ACCESS_KEY
 
-To set these in Heroku, you can do the following:
+The AWS variables are to allow the application to store the images of betting slips on S3.
+
+To set these in Heroku, you do the following:
 
 ```bash
 $ heroku config:set WHOWON_MYSQL_URL=jdbc:mysql://mysql.*****:3306/whowon
@@ -30,4 +34,10 @@ WHOWON_USER_PASSWORDS: *****
 $ heroku config:set WHOWON_HOUSE_TAKE="0.0455"
 Setting config vars and restarting who-won... done
 WHOWON_HOUSE_TAKE: 0.0455
+$ heroku config:set AWS_ACCESS_KEY_ID=****
+Setting AWS_ACCESS_KEY_ID and restarting ⬢ who-won... done, v44
+AWS_ACCESS_KEY_ID: ****
+$ heroku config:set AWS_SECRET_ACCESS_KEY=****
+Setting AWS_SECRET_ACCESS_KEY and restarting ⬢ who-won... done, v45
+AWS_SECRET_ACCESS_KEY: ****
 ```
