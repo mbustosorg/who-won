@@ -66,6 +66,8 @@ class WhoWonData extends Actor with ActorLogging {
 
   val logger =  LoggerFactory.getLogger(getClass)
 
+  val ocrApi = new OcrAPI
+
   implicit val defaultTimeout = Timeout(1 seconds)
 
   val players = {
@@ -271,6 +273,7 @@ class WhoWonData extends Actor with ActorLogging {
       decodedStream.write(decoded)
       decodedStream.close()
       val key = name + "/ticket_" + dateString + ".png"
+      val bet = ocrApi.detectedBet(TicketImageDestination + name + "/ticket_" + dateString + ".png")
       s3.putObject(new PutObjectRequest(S3bucket, key, decodedFile))
       sender ! key
     case BetProfilesRequest(year) =>

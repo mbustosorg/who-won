@@ -135,7 +135,7 @@ $(document).ready(function() {
             if ($('#snapImage') != null) $('#snapImage').remove();
             var img = new Image();
             img.src = e.target.result;
-            var height = img.height / img.width * $('#photoPage')[0].offsetWidth;
+            var height = img.naturalHeight / img.naturalWidth * $('#photoPage')[0].offsetWidth;
             var width = $('#photoPage')[0].offsetWidth;
             img.width = width;
             img.height = height;

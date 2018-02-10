@@ -1,5 +1,4 @@
 import com.typesafe.sbt.SbtNativePackager._
-import NativePackagerKeys._
 
 packageArchetype.java_application
 
@@ -22,6 +21,7 @@ val sprayV = "1.3.2"
 val akkaV = "2.3.6"
 
 val projectLibraries = Seq(
+    "com.google.cloud"        %  "google-cloud-vision" % "1.12.0",
     "com.amazonaws"           %  "aws-java-sdk"    % "1.9.6",
     "io.spray"                %% "spray-can"       % sprayV,
     "io.spray"                %% "spray-routing"   % sprayV,
