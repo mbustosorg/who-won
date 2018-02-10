@@ -47,7 +47,7 @@ $(document).ready(function() {
     function startVideo() {
         if (webcamStream == null) {
             function errBack(message) {
-                if (message == "Permission denied") {
+                if (message.message == "Permission denied") {
                     window.alert("Grant access to your camera for this site")
                 } else {
                     window.alert("Make sure you are accessing this site using https")
