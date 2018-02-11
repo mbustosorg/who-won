@@ -155,59 +155,57 @@ class OcrAPI {
     logger.info(filePath)
     logger.info(text)
     val bet = checkCost(text, checkGameId(text, Bet("mauricio", 0, 0, 0.0, 0.0, "", null)))
-    val withBetType =
-      text match {
-        case FirstTo15Alt(name, id) =>
-          logger.info("1st to 15")
-          text match {
-            case MLBml(ml) =>
-              logger.info("Moneyline")
-              Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
-            case default => {
-              logger.error("No moneyline found")
-              bet
-            }
+    text match {
+      case FirstTo15Alt(name, id) =>
+        logger.info("1st to 15")
+        text match {
+          case MLBml(ml) =>
+            logger.info("Moneyline")
+            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
+          case default => {
+            logger.error("No moneyline found")
+            bet
           }
-        case FirstTo15(name, id) =>
-          logger.info("1st to 15")
-          text match {
-            case MLBml(ml) =>
-              logger.info("Moneyline")
-              Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
-            case default => {
-              logger.error("No moneyline found")
-              bet
-            }
-          }
-        case UndOvr(ml, ovrUnd, points) =>
-          logger.info("Overunder")
-          Bet(bet.userName, bet.bookId, 0, points.toDouble, bet.amount, "ML-OU", bet.timestamp)
-        case MLBodds(num, den) =>
-          logger.info("Moneyline with odds")
-          val ml =
-            if (num > den) {
-              num.toDouble / den.toDouble * 10.0
-            } else {
-              -1.0 * num.toDouble / den.toDouble * 10.0
-            }
-          Bet(bet.userName, bet.bookId, 0, ml, bet.amount, "ML", bet.timestamp)
-        case MLBml(ml) =>
-          logger.info("Moneyline")
-          Bet(bet.userName, bet.bookId, 0, ml.toDouble, bet.amount, "ML", bet.timestamp)
-        case SB(spread, halfPoint) =>
-          logger.info("Straight Bet")
-          val totalSpread = {
-            val fixedSpread = spread.replaceAll("t", "")
-            if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
-            else fixedSpread.toFloat
-          }
-          Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "SB", bet.timestamp)
-        case default => {
-          logger.error("NO MATCH")
-          Bet(bet.userName, bet.bookId, 0, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)
         }
+      case FirstTo15(name, id) =>
+        logger.info("1st to 15")
+        text match {
+          case MLBml(ml) =>
+            logger.info("Moneyline")
+            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
+          case default => {
+            logger.error("No moneyline found")
+            bet
+          }
+        }
+      case UndOvr(ml, ovrUnd, points) =>
+        logger.info("Overunder")
+        Bet(bet.userName, bet.bookId, 0, points.toDouble, bet.amount, "ML-OU", bet.timestamp)
+      case MLBodds(num, den) =>
+        logger.info("Moneyline with odds")
+        val ml =
+          if (num > den) {
+            num.toDouble / den.toDouble * 10.0
+          } else {
+            -1.0 * num.toDouble / den.toDouble * 10.0
+          }
+        Bet(bet.userName, bet.bookId, 0, ml, bet.amount, "ML", bet.timestamp)
+      case MLBml(ml) =>
+        logger.info("Moneyline")
+        Bet(bet.userName, bet.bookId, 0, ml.toDouble, bet.amount, "ML", bet.timestamp)
+      case SB(spread, halfPoint) =>
+        logger.info("Straight Bet")
+        val totalSpread = {
+          val fixedSpread = spread.replaceAll("t", "")
+          if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
+          else fixedSpread.toFloat
+        }
+        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "SB", bet.timestamp)
+      case default => {
+        logger.error("NO MATCH")
+        Bet(bet.userName, bet.bookId, 0, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)
       }
-    withBetType
+    }
   }
 
 }

@@ -380,6 +380,7 @@ $(document).ready(function() {
                 dataType: 'json',
                 data: imgData
             }).done(function(results) {
+                var newBet = results;
             });
         }
     });
