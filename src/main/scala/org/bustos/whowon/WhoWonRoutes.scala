@@ -28,6 +28,7 @@ import com.wordnik.swagger.annotations._
 import com.wordnik.swagger.model.ApiInfo
 import org.bustos.whowon.WhoWonTables._
 import org.slf4j.LoggerFactory
+import shapeless.list
 import spray.http.MediaTypes._
 import spray.http.StatusCodes._
 import spray.http.{DateTime, HttpCookie}
@@ -217,8 +218,9 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
               respondWithMediaType(`application/json`) { ctx =>
                 val future = whoWonData ? TicketImage(username.content, ctx.request.entity.data.toByteString)
                 future onSuccess {
+                  case list: List[Bet] => ctx.complete(list.toJson.toString)
                   case location: String => ctx.complete(location)
-                  case _ => ctx.complete(400, ResponseTextHeader + "\"Error storing image\"}")
+                  case _ => ctx.complete(400, ResponseTextHeader + "\"Error processing image\"}")
                 }
               }}
           }}

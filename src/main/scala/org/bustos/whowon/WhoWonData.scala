@@ -275,7 +275,7 @@ class WhoWonData extends Actor with ActorLogging {
       val key = name + "/ticket_" + dateString + ".png"
       val bet = ocrApi.detectedBet(TicketImageDestination + name + "/ticket_" + dateString + ".png")
       s3.putObject(new PutObjectRequest(S3bucket, key, decodedFile))
-      sender ! bet
+      sender ! List(bet)
     case BetProfilesRequest(year) =>
       val betCounts: List[(String, Double, Int)] = db.withSession { implicit session =>
         betsTable
