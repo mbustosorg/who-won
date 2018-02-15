@@ -32,8 +32,6 @@ import scala.util.matching.Regex
 
 class OcrAPI {
 
-  import ImageResize._
-
   val logger = LoggerFactory.getLogger(getClass)
 
   // Bet Types
@@ -94,7 +92,10 @@ class OcrAPI {
         throw new IllegalArgumentException
       }
     } catch {
-      case e: Throwable => ""
+      case e: Throwable => {
+        logger.error("Unable to communicate with GCloud Vision API")
+        ""
+      }
     }
   }
 
@@ -105,15 +106,15 @@ class OcrAPI {
     if (textName.exists) {
       scala.io.Source.fromFile(textName).mkString
     } else {
-      val newImage = resize(filePath, smallName, 0.75)
-      //val originalText = imageOCR(filePath, textName.getPath)
-      val resizedText = imageOCR(smallName, resizedTextName.getPath)
+      //val newImage = resize(filePath, smallName, 0.75)
+      val originalText = imageOCR(filePath, textName.getPath)
+      //val resizedText = imageOCR(smallName, resizedTextName.getPath)
       //if (originalText != resizedText) {
       //  logger.error("Sized texts do not match")
       //  logger.error(originalText)
       //  logger.error(resizedText)
       //}
-      resizedText
+      originalText
     }
   }
 

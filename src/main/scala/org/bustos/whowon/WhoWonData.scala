@@ -26,6 +26,7 @@ import akka.util.Timeout
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.PutObjectRequest
+import org.bustos.whowon.ImageResize.resize
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -267,13 +268,16 @@ class WhoWonData extends Actor with ActorLogging {
       val directory = new File(TicketImageDestination + name)
       if (!directory.exists) directory.mkdir
       val dateString = filedateFormatter.print(new DateTime)
-      val decodedFile = new File(TicketImageDestination + name + "/ticket_" + dateString + ".png")
+      val filePath = TicketImageDestination + name + "/ticket_" + dateString + ".png"
+      val decodedFile = new File(filePath)
       val decoded = new BASE64Decoder().decodeBuffer(decodedString)
       val decodedStream = new FileOutputStream(decodedFile)
       decodedStream.write(decoded)
       decodedStream.close()
+      val smallName = filePath.replaceAll(".jpg", "_small.jpg").replaceAll(".png", "_small.png").replaceAll("original", "resized")
+      val newImage = resize(TicketImageDestination + name + "/ticket_" + dateString + ".png", smallName, 0.75)
       val key = name + "/ticket_" + dateString + ".png"
-      val bet = ocrApi.detectedBet(TicketImageDestination + name + "/ticket_" + dateString + ".png")
+      val bet = ocrApi.detectedBet(smallName)
       s3.putObject(new PutObjectRequest(S3bucket, key, decodedFile))
       sender ! List(bet)
     case BetProfilesRequest(year) =>
