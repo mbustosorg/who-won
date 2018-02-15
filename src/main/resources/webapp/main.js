@@ -401,10 +401,14 @@ $(document).ready(function() {
                 var result = '\n\nBook Id: ' + results[0].bookId + '\n' +
                              'Amount: $' + results[0].amount + '\n' +
                              'Bet Type: ' + nameForBetType(results[0].betType) + '\n';
-                if (results[0].betType == 'ST') result = result + 'Spread: ' + results[0].spread_ml;
-                else result = result + 'Moneyline: ' + results[0].spread_ml;
-                if (window.confirm('Submit? ' + result)) {
-                    sendBetToServer(results[0].bookId, results[0].spread_ml, results[0].amount, results[0].betType)
+                if (results[0].betType == 'UNKNOWN') {
+                    window.alert('Unable to decode image.  Retake image or enter manually.');
+                } else {
+                    if (results[0].betType == 'ST') result = result + 'Spread: ' + results[0].spread_ml;
+                    else result = result + 'Moneyline: ' + results[0].spread_ml;
+                    if (window.confirm('Submit? ' + result)) {
+                        sendBetToServer(results[0].bookId, results[0].spread_ml, results[0].amount, results[0].betType)
+                    }
                 }
                 prepareForSnap();
             });

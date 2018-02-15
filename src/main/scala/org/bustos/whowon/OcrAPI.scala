@@ -32,6 +32,8 @@ import scala.util.matching.Regex
 
 class OcrAPI {
 
+  import ImageResize._
+
   val logger = LoggerFactory.getLogger(getClass)
 
   // Bet Types
@@ -97,21 +99,21 @@ class OcrAPI {
   }
 
   def ticketText(filePath: String): String = {
-    val smallName = filePath.replaceAll(".jpg", "_small.jpg").replaceAll(".png", "_small.jpg").replaceAll("original", "resized")
+    val smallName = filePath.replaceAll(".jpg", "_small.jpg").replaceAll(".png", "_small.png").replaceAll("original", "resized")
     val textName = new File(filePath.replaceAll(".jpg", ".txt").replaceAll(".png", ".txt").replaceAll("original", "original_text"))
     val resizedTextName = new File(filePath.replaceAll(".jpg", ".txt").replaceAll(".png", ".txt").replaceAll("original", "resized_text"))
     if (textName.exists) {
       scala.io.Source.fromFile(textName).mkString
     } else {
-      //val newImage = resize(filePath, smallName, 0.85)
-      val originalText = imageOCR(filePath, textName.getPath)
-      //val resizedText = imageOCR(smallName, resizedTextName.getPath)
+      val newImage = resize(filePath, smallName, 0.75)
+      //val originalText = imageOCR(filePath, textName.getPath)
+      val resizedText = imageOCR(smallName, resizedTextName.getPath)
       //if (originalText != resizedText) {
       //  logger.error("Sized texts do not match")
       //  logger.error(originalText)
       //  logger.error(resizedText)
       //}
-      originalText
+      resizedText
     }
   }
 

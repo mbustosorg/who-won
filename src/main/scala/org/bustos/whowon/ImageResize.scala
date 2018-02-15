@@ -35,7 +35,7 @@ object ImageResize {
     // extracts extension of output file
     val formatName = outputImagePath.substring(outputImagePath.lastIndexOf(".") + 1)
     // writes to output file
-    ImageIO.write(outputImage, "jpg", new File(outputImagePath))
+    ImageIO.write(outputImage, formatName, new File(outputImagePath))
   }
 
   def resize(inputImagePath: String, outputImagePath: String, percent: Double): Unit = {
