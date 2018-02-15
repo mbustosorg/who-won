@@ -200,7 +200,7 @@ class OcrAPI {
           if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
           else fixedSpread.toFloat
         }
-        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "SB", bet.timestamp)
+        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "ST", bet.timestamp)
       case default => {
         logger.error("NO MATCH")
         Bet(bet.userName, bet.bookId, 0, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)

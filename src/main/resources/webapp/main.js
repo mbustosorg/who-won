@@ -106,6 +106,18 @@ $(document).ready(function() {
         $('.navbar-toggle').click()
     });
 
+    function stopSnap(img) {
+        $('#snapImage').remove();
+        $('#photoPage').prepend(img);
+        stopVideo();
+    };
+
+    function prepareForSnap() {
+        $('#snapImage').remove();
+        $('video').removeClass('hide');
+        startVideo();
+    };
+
     $('#snapButton').click(function() {
         $('video').addClass('hide');
         var newCanvas = document.createElement("canvas");
@@ -113,19 +125,17 @@ $(document).ready(function() {
         newCanvas.height = video.videoHeight;
         var height = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
         var width = $('#photoPage')[0].offsetWidth;
-        newCanvas.getContext('2d').drawImage(video, 0, 0,  width, height);
+        newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
         var img = new Image();
         img.src = newCanvas.toDataURL();
         img.id = 'snapImage';
-        $('#snapImage').remove();
-        $('#photoPage').prepend(img);
-        stopVideo();
+        img.height = height;
+        img.width = width;
+        stopSnap(img);
     });
 
     $('#snapRetakeButton').click(function() {
-        $('#snapImage').remove();
-        $('video').removeClass('hide');
-        startVideo();
+        prepareForSnap();
     });
 
     $('#mobileInputPhoto').change(function () {
@@ -141,8 +151,7 @@ $(document).ready(function() {
                 img.width = width;
                 img.height = height;
                 img.id = 'snapImage';
-                $('#snapImage').remove();
-                $('#photoPage').prepend(img);
+                stopSnap(img);
             }
         };
         reader.readAsDataURL(this.files[0]);
@@ -370,9 +379,18 @@ $(document).ready(function() {
         return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
     };
 
+    function nameForBetType(betType) {
+        if (betType == 'ML') return 'Moneyline';
+        else if (betType == 'ST') return 'Straight Bet';
+        else if (betType == 'ML-OU') return 'Over / Under';
+        else if (betType == 'ML-15') return '1st to 15';
+        else return 'Unknown';
+    };
+
     $('#betSubmit').click(function() {
         if ($('#photoPage').hasClass('hide')) submitBet();
         else {
+           $('#runningQuery').removeClass('hide');
            var imgData = JSON.stringify(getBase64Image($('#snapImage')[0]));
             $.ajax({
                 type: "POST",
@@ -380,7 +398,15 @@ $(document).ready(function() {
                 dataType: 'json',
                 data: imgData
             }).done(function(results) {
-                var newBet = results;
+                var result = '\n\nBook Id: ' + results[0].bookId + '\n' +
+                             'Amount: $' + results[0].amount + '\n' +
+                             'Bet Type: ' + nameForBetType(results[0].betType) + '\n';
+                if (results[0].betType == 'ST') result = result + 'Spread: ' + results[0].spread_ml;
+                else result = result + 'Moneyline: ' + results[0].spread_ml;
+                if (window.confirm('Submit? ' + result)) {
+                    sendBetToServer(results[0].bookId, results[0].spread_ml, results[0].amount, results[0].betType)
+                }
+                prepareForSnap();
             });
         }
     });
@@ -429,7 +455,6 @@ $(document).ready(function() {
         var bookId = $('#bookId').val().split(' ')[0];
         var spreadMlAmount = '0';
         var betAmount = $('#betAmount').val();
-        var userName = getCookie("WHOWON_USER");
         var betType = '';
         if ($('#moneylinePane').hasClass('active')) {
             betType = 'ML';
@@ -446,6 +471,11 @@ $(document).ready(function() {
             }
             spreadMlAmount = $('#spreadAmount').val();
         }
+        sendBetToServer(bookId, spreadMlAmount, betAmount, betType);
+    };
+
+    function sendBetToServer(bookId, spreadMlAmount, betAmount, betType) {
+        var userName = getCookie("WHOWON_USER");
         var dataString = '{\"userName\": \"' + userName + '\", \"bookId\": ' + bookId+ ', \"year\": ' + year() + ', \"spread_ml\": ' + spreadMlAmount + ', \"amount\": ' + betAmount + ', \"betType\": \"' + betType + '\", \"timestamp\": \"' + (new Date()).toISOString() + '\"}';
         $.ajax({
             type: "POST",
