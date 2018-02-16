@@ -50,7 +50,8 @@ class OcrAPI {
 
   val credentials = envOrElse("GOOGLE_APPLICATION_CREDENTIALS_FILE", "")
   if (!credentials.isEmpty) {
-    val CredentialsFileName = "~/google_application_credentials.json"
+    logger.info("Writing out GOOGLE_APPLICATION_CREDENTIALS to $HOME/google_application_credentials.json")
+    val CredentialsFileName = "$HOME/google_application_credentials.json"
     val file = new File(CredentialsFileName)
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(credentials)
