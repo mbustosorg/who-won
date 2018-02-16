@@ -27,6 +27,7 @@ import com.google.protobuf.ByteString
 import org.bustos.whowon.WhoWonTables.Bet
 import org.slf4j.LoggerFactory
 
+import scala.util.Properties.envOrElse
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 
@@ -46,6 +47,15 @@ class OcrAPI {
   val Cost = """.*Ticket C[しoa]st:? (\$[0-9]+[\.|,] ?[0-9]+).*""".r
   val ToPay = ".*to pay (\\$[0-9]+[\\.|,][0-9]+).*".r
   val IdAndTeam = ".*ROUND ([0-9]+) .*? [-|\\+].*".r
+
+  val credentials = envOrElse("GOOGLE_APPLICATION_CREDENTIALS_FILE", "")
+  if (!credentials.isEmpty) {
+    val CredentialsFileName = "~/google_application_credentials.json"
+    val file = new File(CredentialsFileName)
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(credentials)
+    bw.close()
+  }
 
   def checkRegex(text: String, check: String, regex: Regex) = {
     text match {
