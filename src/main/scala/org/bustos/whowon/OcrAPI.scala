@@ -93,7 +93,7 @@ class OcrAPI {
       }
     } catch {
       case e: Throwable => {
-        logger.error("Unable to communicate with GCloud Vision API")
+        logger.error("Unable to communicate with GCloud Vision API\n" + e.getMessage)
         ""
       }
     }
