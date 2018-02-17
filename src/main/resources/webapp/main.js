@@ -147,14 +147,11 @@ $(document).ready(function() {
             img.src = e.target.result;
             img.onload = function () {
                 var newCanvas = document.createElement("canvas");
-
-                var height = img.naturalHeight / img.naturalWidth * $('#photoPage')[0].offsetWidth;
                 var width = $('#photoPage')[0].offsetWidth;
-
+                var height = img.naturalHeight / img.naturalWidth * width;
                 newCanvas.width = width;
                 newCanvas.height = height;
                 newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
-                var img = new Image();
                 img.src = newCanvas.toDataURL();
                 img.id = 'snapImage';
                 img.height = height;
