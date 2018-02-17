@@ -143,20 +143,6 @@ $(document).ready(function() {
         var reader = new FileReader();
         reader.onload = function (e) {
             if ($('#snapImage') != null) $('#snapImage').remove();
-
-            var newCanvas = document.createElement("canvas");
-            newCanvas.width = video.videoWidth;
-            newCanvas.height = video.videoHeight;
-            var height = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
-            var width = $('#photoPage')[0].offsetWidth;
-            newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
-            var img = new Image();
-            img.src = newCanvas.toDataURL();
-            img.id = 'snapImage';
-            img.height = height;
-            img.width = width;
-            stopSnap(img);
-
             var img = new Image();
             img.src = e.target.result;
             img.onload = function () {
@@ -166,11 +152,12 @@ $(document).ready(function() {
                 newCanvas.width = width;
                 newCanvas.height = height;
                 newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
-                img.src = newCanvas.toDataURL();
-                img.id = 'snapImage';
-                img.height = height;
-                img.width = width;
-                stopSnap(img);
+                var scaledImage = new Image();
+                scaledImage.src = newCanvas.toDataURL();
+                scaledImage.id = 'snapImage';
+                scaledImage.height = height;
+                scaledImage.width = width;
+                stopSnap(scaledImage);
             }
         };
         reader.readAsDataURL(this.files[0]);
