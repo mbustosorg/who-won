@@ -1,6 +1,8 @@
 Who Won Bet Tracking
 ==========================
 
+[![Build Status](https://travis-ci.org/mbustosorg/who-won.svg?branch=master)](https://travis-ci.org/mbustosorg/who-won)
+
 This is a simple application to help a group to keep track of March Madness bets.
 
 This application is currently deployed at https://who-won.herokuapp.com

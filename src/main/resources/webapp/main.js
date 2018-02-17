@@ -143,6 +143,20 @@ $(document).ready(function() {
         var reader = new FileReader();
         reader.onload = function (e) {
             if ($('#snapImage') != null) $('#snapImage').remove();
+
+            var newCanvas = document.createElement("canvas");
+            newCanvas.width = video.videoWidth;
+            newCanvas.height = video.videoHeight;
+            var height = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
+            var width = $('#photoPage')[0].offsetWidth;
+            newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
+            var img = new Image();
+            img.src = newCanvas.toDataURL();
+            img.id = 'snapImage';
+            img.height = height;
+            img.width = width;
+            stopSnap(img);
+
             var img = new Image();
             img.src = e.target.result;
             img.onload = function () {
