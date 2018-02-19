@@ -151,12 +151,13 @@ $(document).ready(function() {
                 var height = img.naturalHeight / img.naturalWidth * width;
                 newCanvas.width = width;
                 newCanvas.height = height;
-                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.width, newCanvas.height);
+                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.width * 2, newCanvas.height * 2);
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
                 scaledImage.id = 'snapImage';
                 scaledImage.height = height;
                 scaledImage.width = width;
+                $('#snapImage').css('transform','rotate(90deg)');
                 stopSnap(scaledImage);
             }
         };
