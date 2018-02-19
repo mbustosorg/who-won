@@ -152,12 +152,12 @@ $(document).ready(function() {
                 newCanvas.width = width;
                 newCanvas.height = height;
                 newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.width, newCanvas.height);
+                newCanvas.getContext('2d').rotate(Math.PI / 2);
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
                 scaledImage.id = 'snapImage';
                 scaledImage.height = height;
                 scaledImage.width = width;
-                $('#snapImage').rotate(90);
                 stopSnap(scaledImage);
             }
         };
