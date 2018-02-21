@@ -404,6 +404,8 @@ $(document).ready(function() {
         var canvas = document.createElement("canvas");
         canvas.width = imgElem.naturalWidth;
         canvas.height = imgElem.naturalHeight;
+        canvas.width = imgElem.naturalHeight;
+        canvas.height = imgElem.naturalWidth;
         var ctx = canvas.getContext("2d");
         ctx.drawImage(imgElem, 0, 0);
         var dataURL = canvas.toDataURL("image/png");
