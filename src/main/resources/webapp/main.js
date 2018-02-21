@@ -181,7 +181,7 @@ $(document).ready(function() {
                 scaledImage.id = 'snapImage';
                 scaledImage.height = w2;
                 scaledImage.width = h2;
-                
+
                 stopSnap(scaledImage);
             }
         };
