@@ -120,17 +120,38 @@ $(document).ready(function() {
 
     $('#snapButton').click(function() {
         $('video').addClass('hide');
+
+/*
+        var h2 = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
+        var w2 = $('#photoPage')[0].offsetWidth;
+
         var newCanvas = document.createElement("canvas");
         newCanvas.width = video.videoWidth;
         newCanvas.height = video.videoHeight;
-        var height = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
-        var width = $('#photoPage')[0].offsetWidth;
         newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.width, newCanvas.height);
+
         var img = new Image();
         img.src = newCanvas.toDataURL();
         img.id = 'snapImage';
-        img.height = height;
-        img.width = width;
+        img.height = h2;
+        img.width = w2;
+        */
+
+        var h2 = video.videoHeight / video.videoWidth * $('#photoPage')[0].offsetWidth;
+        var w2 = $('#photoPage')[0].offsetWidth;
+
+        var newCanvas = document.createElement("canvas");
+        newCanvas.width = video.videoWidth;
+        newCanvas.height = video.videoHeight;
+        newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
+        newCanvas.getContext('2d').drawImage(video, 0, 0, newCanvas.height, newCanvas.width);
+
+        var img = new Image();
+        img.src = newCanvas.toDataURL();
+        img.id = 'snapImage';
+        img.height = w2;
+        img.width = h2;
+
         stopSnap(img);
     });
 
@@ -146,18 +167,21 @@ $(document).ready(function() {
             var img = new Image();
             img.src = e.target.result;
             img.onload = function () {
+                var h2 = img.naturalHeight / img.naturalWidth * $('#photoPage')[0].offsetWidth;
+                var w2 = $('#photoPage')[0].offsetWidth;
+
                 var newCanvas = document.createElement("canvas");
-                var width = $('#photoPage')[0].offsetWidth;
-                var height = img.naturalHeight / img.naturalWidth * width;
-                newCanvas.width = width;
-                newCanvas.height = height;
-                newCanvas.getContext('2d').transform(0, 1, -1, 0, width, 0);
-                newCanvas.getContext('2d').drawImage(img, 0, 0);
+                newCanvas.width = img.naturalWidth;
+                newCanvas.height = img.naturalHeight;
+                newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
+                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height, newCanvas.width);
+
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
                 scaledImage.id = 'snapImage';
-                scaledImage.height = height;
-                scaledImage.width = width;
+                scaledImage.height = w2;
+                scaledImage.width = h2;
+                
                 stopSnap(scaledImage);
             }
         };
