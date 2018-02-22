@@ -25,12 +25,12 @@ $(document).ready(function() {
             iphone = true;
         }
     }
-    if (iphone) {
-        $('#mobilePhoto').removeClass('hide');
-    } else {
+    //if (iphone) {
+    //    $('#mobilePhoto').removeClass('hide');
+    //} else {
         $('#desktopPhoto').removeClass('hide');
         $('#snapButtons').removeClass('hide');
-    }
+    //}
 
     function year() {
         var year = $('#yearDropdownLabel').text();
