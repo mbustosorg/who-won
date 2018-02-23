@@ -47,15 +47,11 @@ $(document).ready(function() {
     function startVideo() {
         if (webcamStream == null) {
             function errBack(message) {
-                if (message.message == "Permission denied") {
-                    window.alert("Grant access to your camera for this site")
-                } else {
-                    window.alert("Make sure you are accessing this site using https")
-                }
+                window.alert("Make sure you are accessing this site using https & grant access to your camera for this site.")
                 console.log("Video capture error: ", message);
             };
             if(navigator.getUserMedia) { // Standard
-                navigator.mediaDevices.getUserMedia(constraints)
+                navigator.getUserMedia(constraints)
                   .then(function(stream) {
                     var videoTracks = stream.getVideoTracks();
                     console.log('Got stream with constraints:', constraints);
