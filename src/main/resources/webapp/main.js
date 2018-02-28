@@ -167,12 +167,13 @@ $(document).ready(function() {
                 var h2 = img.naturalHeight / img.naturalWidth * $('#photoPage')[0].offsetWidth;
                 var w2 = $('#photoPage')[0].offsetWidth;
 
+                var scale = 0.5
                 var newCanvas = document.createElement("canvas");
-                newCanvas.width = img.naturalWidth / 2;
-                newCanvas.height = img.naturalHeight / 2;
+                newCanvas.width = img.naturalWidth * scale;
+                newCanvas.height = img.naturalHeight * scale;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
-                newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, 0);
-                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height * 2, newCanvas.width * 2);
+                newCanvas.getContext('2d').transform(scale, 0, 0, scale, 0, 0);
+                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height / scale, newCanvas.width / scale);
 
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
