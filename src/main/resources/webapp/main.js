@@ -171,7 +171,7 @@ $(document).ready(function() {
                 newCanvas.height = img.naturalHeight / 2;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
                 newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvas.height / 2);
-                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height / 2, newCanvas.width / 2);
+                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height, newCanvas.width);
 
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
@@ -399,8 +399,8 @@ $(document).ready(function() {
 
     function getBase64Image(imgElem) {
         var canvas = document.createElement("canvas");
-        //canvas.width = imgElem.naturalWidth;
-        //canvas.height = imgElem.naturalHeight;
+        canvas.width = imgElem.naturalWidth;
+        canvas.height = imgElem.naturalHeight;
         var ctx = canvas.getContext("2d");
         ctx.drawImage(imgElem, 0, 0);
         var dataURL = canvas.toDataURL("image/png");
