@@ -40,6 +40,7 @@ class OcrAPI {
   val MLBodds = ".* ([0-9]+)/([0-9]+) [H|M]L[B|E].*".r
   val MLBml = ".* ([+|-][0-9]+) [H|M]L[B|E].*".r
   val SB = """.* PLB ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .*""".r
+  val FirstHalf = """.*(1ST HALF COLLEGE BASKETBALL) ([0-9]+) .*""".r
   val FirstTo15 = """.*(1ST TO SCR 15 PTS) ([0-9]+) .*""".r
   val FirstTo15Alt = """.*(1ST TO 15 POINTS).+?([0-9]+).*""".r
   val GameId = ".*ROUND ([0-9]+) .*".r
@@ -135,6 +136,9 @@ class OcrAPI {
         case GameId(id) => {
           id.toInt
         }
+        case FirstHalf(name, id) => {
+          id.toInt
+        }
         case FirstTo15(name, id) => {
           id.toInt
         }
@@ -170,6 +174,17 @@ class OcrAPI {
     logger.info(text)
     val bet = checkCost(text, checkGameId(text, Bet("mauricio", 0, 0, 0.0, 0.0, "", null)))
     text match {
+      case FirstHalf(name, id) =>
+        logger.info("1st Half")
+        text match {
+          case MLBml(ml) =>
+            logger.info("Moneyline")
+            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-1H", bet.timestamp)
+          case default => {
+            logger.error("No moneyline found")
+            bet
+          }
+        }
       case FirstTo15Alt(name, id) =>
         logger.info("1st to 15")
         text match {

@@ -170,7 +170,7 @@ $(document).ready(function() {
                 newCanvas.width = img.naturalWidth / 2;
                 newCanvas.height = img.naturalHeight / 2;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
-                newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvas.height);
+                newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvas.height * 2);
                 newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height * 2, newCanvas.width * 2);
 
                 var scaledImage = new Image();
@@ -441,6 +441,7 @@ $(document).ready(function() {
                     }
                 }
                 prepareForSnap();
+                $('#runningQuery').removeClass('hide');
             });
         }
     });
