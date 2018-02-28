@@ -167,8 +167,8 @@ $(document).ready(function() {
                 var w2 = $('#photoPage')[0].offsetWidth;
 
                 var newCanvas = document.createElement("canvas");
-                newCanvas.width = img.naturalWidth;
-                newCanvas.height = img.naturalHeight;
+                //newCanvas.width = img.naturalWidth;
+                //newCanvas.height = img.naturalHeight;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
                 newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvas.height / 2);
                 newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height / 2, newCanvas.width / 2);
@@ -399,8 +399,8 @@ $(document).ready(function() {
 
     function getBase64Image(imgElem) {
         var canvas = document.createElement("canvas");
-        canvas.width = imgElem.naturalWidth;
-        canvas.height = imgElem.naturalHeight;
+        //canvas.width = imgElem.naturalWidth;
+        //canvas.height = imgElem.naturalHeight;
         var ctx = canvas.getContext("2d");
         ctx.drawImage(imgElem, 0, 0);
         var dataURL = canvas.toDataURL("image/png");
