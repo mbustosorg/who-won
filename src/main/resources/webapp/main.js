@@ -167,7 +167,7 @@ $(document).ready(function() {
                 var h2 = img.naturalHeight / img.naturalWidth * $('#photoPage')[0].offsetWidth;
                 var w2 = $('#photoPage')[0].offsetWidth;
 
-                var scale = 0.5
+                var scale = 0.3
                 var newCanvas = document.createElement("canvas");
                 newCanvas.width = img.naturalWidth * scale;
                 newCanvas.height = img.naturalHeight * scale;
