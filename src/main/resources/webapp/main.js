@@ -111,6 +111,7 @@ $(document).ready(function() {
     function prepareForSnap() {
         $('#snapImage').remove();
         $('video').removeClass('hide');
+        $('#runningQuery').addClass('hide');
         startVideo();
     };
 
@@ -441,7 +442,6 @@ $(document).ready(function() {
                     }
                 }
                 prepareForSnap();
-                $('#runningQuery').removeClass('hide');
             });
         }
     });
