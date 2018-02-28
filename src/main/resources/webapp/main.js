@@ -167,8 +167,8 @@ $(document).ready(function() {
                 var w2 = $('#photoPage')[0].offsetWidth;
 
                 var newCanvas = document.createElement("canvas");
-                //newCanvas.width = img.naturalWidth;
-                //newCanvas.height = img.naturalHeight;
+                newCanvas.width = img.naturalWidth / 2;
+                newCanvas.height = img.naturalHeight / 2;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
                 newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvas.height / 2);
                 newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height / 2, newCanvas.width / 2);
