@@ -51,7 +51,7 @@ $(document).ready(function() {
                 console.log("Video capture error: ", message);
             };
             if(navigator.getUserMedia) { // Standard
-                navigator.getUserMedia(constraints)
+                navigator.mediaDevices.getUserMedia(constraints)
                   .then(function(stream) {
                     var videoTracks = stream.getVideoTracks();
                     console.log('Got stream with constraints:', constraints);
@@ -170,7 +170,7 @@ $(document).ready(function() {
                 newCanvas.width = img.naturalWidth;
                 newCanvas.height = img.naturalHeight;
                 newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width / 2, 0);
-                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height / 2, newCanvas.width / 2);
+                newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height, newCanvas.width);
 
                 var scaledImage = new Image();
                 scaledImage.src = newCanvas.toDataURL();
