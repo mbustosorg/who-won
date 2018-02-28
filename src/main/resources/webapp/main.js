@@ -169,7 +169,8 @@ $(document).ready(function() {
                 var newCanvas = document.createElement("canvas");
                 newCanvas.width = img.naturalWidth;
                 newCanvas.height = img.naturalHeight;
-                newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width / 2, 0);
+                newCanvas.getContext('2d').transform(0, 1, -1, 0, newCanvas.width, 0);
+                newCanvas.getContext('2d').transform(0.5, 0, 0, 0.5, 0, newCanvast.height / 2);
                 newCanvas.getContext('2d').drawImage(img, 0, 0, newCanvas.height, newCanvas.width);
 
                 var scaledImage = new Image();
