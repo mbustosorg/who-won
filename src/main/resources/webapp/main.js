@@ -404,7 +404,7 @@ $(document).ready(function() {
         canvas.width = imgElem.naturalWidth;
         canvas.height = imgElem.naturalHeight;
         var ctx = canvas.getContext("2d");
-        ctx.drawImage(imgElem, 0, 0);
+        ctx.drawImage(imgElem, 0, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
         var dataURL = canvas.toDataURL("image/png");
         return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
     };
