@@ -36,6 +36,7 @@ $(document).ready(function() {
         var year = $('#yearDropdownLabel').text();
         if (year == 'Year ') {
            year = (new Date()).getFullYear();
+           year = 2016;
         }
         return year;
     }
