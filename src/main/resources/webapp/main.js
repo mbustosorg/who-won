@@ -255,9 +255,13 @@ $(document).ready(function() {
         });
     });
 
-    $('#opt-sb-overunder').click(function() {
+    $('#opt-sb-over').click(function() {
         updateSpread(50.0, 300.0);
-        $('#spread-label').text('O/U');
+        $('#spread-label').text('Total Points');
+    });
+    $('#opt-sb-under').click(function() {
+        updateSpread(50.0, 300.0);
+        $('#spread-label').text('Total Points');
     });
 
     $('#opt-sb-game').click(function() {
@@ -502,8 +506,10 @@ $(document).ready(function() {
             spreadMlAmount = $('#moneyline').val();
         } else {
             betType = 'ST';
-            if ($('#opt-sb-overunder')[0].checked) {
-                betType = betType + '-OU';
+            if ($('#opt-sb-over')[0].checked) {
+                betType = betType + '-OV';
+            } else if {($('#opt-sb-under')[0].checked) {
+                betType = betType + '-UN';
             }
             spreadMlAmount = $('#spreadAmount').val();
         }
