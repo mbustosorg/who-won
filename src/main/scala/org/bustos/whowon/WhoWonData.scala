@@ -110,14 +110,12 @@ class WhoWonData extends Actor with ActorLogging {
             result.finalScore - result.opposingFinalScore
           } else if (bet.betType == FirstTo15Moneyline) {
             if (result.firstTo15) 1 else -1
-          } else if (bet.betType == FirstHalfStraight) {
-            result.firstHalfScore - result.opposingFirstHalfScore + bet.spread_ml
           } else if (bet.betType == FirstHalfMoneyline) {
             result.firstHalfScore - result.opposingFirstHalfScore
-          } else if (bet.betType == SecondHalfStraight) {
-            (result.finalScore - result.firstHalfScore) - (result.opposingFinalScore - result.opposingFirstHalfScore) + bet.spread_ml
-          } else if (bet.betType == SecondHalfMoneyline) {
-            (result.finalScore - result.firstHalfScore) - (result.opposingFinalScore - result.opposingFirstHalfScore)
+          } else if (bet.betType == Over) {
+            result.finalScore + result.opposingFinalScore - bet.spread_ml
+          } else if (bet.betType == Under) {
+            bet.spread_ml - (result.finalScore + result.opposingFinalScore)
           } else 0
         }
         val resultType = {
@@ -126,7 +124,7 @@ class WhoWonData extends Actor with ActorLogging {
           else "Push"
         }
         val winnings = {
-          if (bet.betType == StraightBet || bet.betType == FirstHalfStraight || bet.betType == SecondHalfStraight) {
+          if (bet.betType == StraightBet) {
             if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
             else if (resultType == "Lose") 0.0
             else bet.amount
@@ -304,8 +302,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       //sender ! thisYear.getYear :: years
-      //sender ! List(2018, 2017, 2016)
-      sender ! List(2016)
+      sender ! List(2018, 2017, 2016)
     case CompetitionRequest(year, bet) =>
       val opposingBookId = db.withSession { implicit session =>
         bracketsTable.filter( x => { x.bookId === bet && x.year === year }).list.head.opposingBookId

@@ -36,7 +36,6 @@ $(document).ready(function() {
         var year = $('#yearDropdownLabel').text();
         if (year == 'Year ') {
            year = (new Date()).getFullYear();
-           year = 2016;
         }
         return year;
     }
@@ -413,8 +412,10 @@ $(document).ready(function() {
     function nameForBetType(betType) {
         if (betType == 'ML') return 'Moneyline';
         else if (betType == 'ST') return 'Straight Bet';
-        else if (betType == 'ML-OU') return 'Over / Under';
+        else if (betType == 'ML-OV') return 'Over';
+        else if (betType == 'ML-OU') return 'Under';
         else if (betType == 'ML-15') return '1st to 15';
+        else if (betType == 'ML-1H') return '1st Half';
         else return 'Unknown';
     };
 
