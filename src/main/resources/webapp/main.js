@@ -508,7 +508,7 @@ $(document).ready(function() {
             betType = 'ST';
             if ($('#opt-sb-over')[0].checked) {
                 betType = betType + '-OV';
-            } else if {($('#opt-sb-under')[0].checked) {
+            } else if ($('#opt-sb-under')[0].checked) {
                 betType = betType + '-UN';
             }
             spreadMlAmount = $('#spreadAmount').val();
