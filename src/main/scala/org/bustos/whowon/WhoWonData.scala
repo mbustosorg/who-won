@@ -124,7 +124,7 @@ class WhoWonData extends Actor with ActorLogging {
           else "Push"
         }
         val winnings = {
-          if (bet.betType == StraightBet) {
+          if (bet.betType == StraightBet || bet.betType == Over || bet.betType == Under) {
             if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
             else if (resultType == "Lose") 0.0
             else bet.amount
@@ -228,8 +228,12 @@ class WhoWonData extends Actor with ActorLogging {
           filteredBets.foldLeft((0.0, 0.0, 0))({ (acc, x) =>
             val mlBook = x.bookId + "ML"
             val stBook = x.bookId + "ST"
+            val stOvBook = x.bookId + "ST-OV"
+            val stUnBook = x.bookId + "ST-UN"
             val newAccML = if (betsByUserMap(k).contains(mlBook) && betsByUserMap(k)(mlBook).timestamp.getMillis == x.timestamp.getMillis) (acc._1 - betsByUserMap(k)(mlBook).amount, acc._2, acc._3) else acc
-            val newAccST = if (betsByUserMap(k).contains(stBook) && betsByUserMap(k)(stBook).timestamp.getMillis == x.timestamp.getMillis) (newAccML._1 - betsByUserMap(k)(stBook).amount, newAccML._2, newAccML._3) else newAccML
+            val newAccSTOV = if (betsByUserMap(k).contains(stOvBook) && betsByUserMap(k)(stOvBook).timestamp.getMillis == x.timestamp.getMillis) (newAccML._1 - betsByUserMap(k)(stOvBook).amount, newAccML._2, newAccML._3) else newAccML
+            val newAccSTUN = if (betsByUserMap(k).contains(stUnBook) && betsByUserMap(k)(stUnBook).timestamp.getMillis == x.timestamp.getMillis) (newAccSTOV._1 - betsByUserMap(k)(stUnBook).amount, newAccSTOV._2, newAccSTOV._3) else newAccSTOV
+            val newAccST = if (betsByUserMap(k).contains(stBook) && betsByUserMap(k)(stBook).timestamp.getMillis == x.timestamp.getMillis) (newAccSTUN._1 - betsByUserMap(k)(stBook).amount, newAccSTUN._2, newAccSTUN._3) else newAccSTUN
             if (gameResults.contains(x.bookId)) {
               val game = gameResults(x.bookId)
               if (game.resultTimeStamp.getMillis <= timeMillis) {

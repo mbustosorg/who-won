@@ -48,7 +48,7 @@ object WhoWon extends App {
     val portFromEnv = envOrElse("PORT", "") != ""
     val port = envOrElse("PORT", config.getString("server.port"))
 
-    if (!portFromEnv) initializeData
+    //if (!portFromEnv) initializeData
 
     val server = system.actorOf(Props[WhoWonServiceActor], "whowonRoutes")
 
@@ -118,6 +118,7 @@ object WhoWon extends App {
     //importBrackets(2017)
     //importResults(2017)
     importBrackets(2018)
+    //importResults(2018)
   }
 
   doMain

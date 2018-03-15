@@ -454,10 +454,10 @@ $(document).ready(function() {
     $('#resultsSubmit').click(function() {
         var bookId = $('#resultsBookId').val().split(' ')[0];
         var selectedScore = $('#selectedScore').val();
-        var selectedFirstHalfScore = $('#selectedFirstHalfScore').val();
+        var selectedFirstHalfScore = 0;//$('#selectedFirstHalfScore').val();
         var opposingBookId = $('#resultsOpposingBookId').val().split(' ')[0];
         var opposingScore = $('#opposingScore').val();
-        var opposingFirstHalfScore = $('#opposingFirstHalfScore').val();
+        var opposingFirstHalfScore = 0;//$('#opposingFirstHalfScore').val();
         var firstTo15 = $('#firstTo15').val().split(' ')[0];
         var timestamp = (new Date()).toISOString();
         if (bookId == opposingBookId) {
@@ -473,7 +473,7 @@ $(document).ready(function() {
                 ', \"opposingFinalScore\": ' + opposingScore +
                 ', \"opposingFirstHalfScore\": ' + opposingFirstHalfScore +
                 ', \"resultTimeStamp\": \"' + timestamp + '\"' +
-                ', \"firstTo15\": \"' + favFirst + '\"}';
+                ', \"firstTo15\": ' + favFirst + '}';
             $.ajax({
                 type: "POST",
                 url: '/games/' + year(),
@@ -758,6 +758,18 @@ $(document).ready(function() {
 				$('#bookId').append(
 					'<option value =\"' + labelString + '\">' + labelString + '</option>'
 				);
+			    if (currentGame.firstHalf != 0) {
+	     		    var labelString = currentGame.firstHalf + ' - ' + currentGame.teamName  + ' (1st Half)';
+                    $('#bookId').append(
+                        '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                    );
+			    }
+			    if (currentGame.firstTo15 != 0) {
+	     		    var labelString = currentGame.firstTo15 + ' - ' + currentGame.teamName  + ' (1st to 15)';
+                    $('#bookId').append(
+                        '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                    );
+			    }
  			});
 		});
 		updateSpread(-40.0, 40.0);

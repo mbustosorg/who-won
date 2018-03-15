@@ -36,8 +36,8 @@ object WhoWonTables {
   val MoneylineBet = "ML"
   val FirstTo15Moneyline = "ML-15"
   val FirstHalfMoneyline = "ML-1H"
-  val Over= "ML-OV"
-  val Under = "ML-UN"
+  val Over= "ST-OV"
+  val Under = "ST-UN"
 
   val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
   // Base case classes
