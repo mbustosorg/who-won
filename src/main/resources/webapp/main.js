@@ -657,7 +657,8 @@ $(document).ready(function() {
 					'<td>' + currentGame.undName + '</td>' +
 					'<td>' + currentGame.undFirstHalfScore + '</td>' +
 					'<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
-					'</tr><tr><td/><td/><td/><td/></tr>');
+					'<td>' + (currentGame.favScore + currentGame.undScore) + '</tr>' +
+					'</tr><td/><td/><td/></tr>');
 				if (i < games.length - 1) {
                     currentGame = games[i + 1];
                     timestamp = formatTimestamp(new Date(currentGame.timestamp));
@@ -677,7 +678,8 @@ $(document).ready(function() {
                         '<td>' + currentGame.undName + '</td>' +
      					'<td>' + currentGame.undFirstHalfScore + '</td>' +
                         '<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
-                        '</tr><tr><td/><td/><td/><td/></tr>');
+    					'<td>' + (currentGame.favScore + currentGame.undScore) + '</tr>' +
+                        '</tr><td/><td/><td/></tr>');
                 }
             }
     	});
