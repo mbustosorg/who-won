@@ -1,6 +1,7 @@
 *.iml
 *.png
 *.csv
+*.numbers
 *.class
 *.log
 .DS_Store
