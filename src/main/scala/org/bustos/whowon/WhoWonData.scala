@@ -306,7 +306,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       //sender ! thisYear.getYear :: years
-      sender ! List(2018, 2017, 2016)
+      sender ! Years(List(2019, 2018, 2017, 2016))
     case CompetitionRequest(year, bet) =>
       val opposingBookId = db.withSession { implicit session =>
         bracketsTable.filter( x => { x.bookId === bet && x.year === year }).list.head.opposingBookId

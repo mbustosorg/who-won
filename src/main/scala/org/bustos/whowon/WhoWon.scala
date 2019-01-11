@@ -22,39 +22,37 @@ package org.bustos.whowon
 import java.io.File
 
 import akka.actor.{ActorSystem, Props}
-import akka.io.IO
-import akka.pattern.ask
-import akka.util.Timeout
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Route
+import akka.stream.ActorMaterializer
 import com.github.tototoshi.csv._
 import com.typesafe.config.ConfigFactory
-import org.bustos.whowon.WhoWonTables.Bracket
-import spray.can.Http
+import org.bustos.whowon.WhoWonData._
+import org.bustos.whowon.WhoWonTables.{Bracket, _}
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.Properties.envOrElse
-import WhoWonData._
-import WhoWonTables._
-
 import scala.slick.driver.MySQLDriver.simple._
+import scala.util.Properties.envOrElse
 
-object WhoWon extends App {
+object WhoWon extends App with WhoWonRoutes {
 
-  def doMain = {
+  implicit val system: ActorSystem = ActorSystem("WhoWonAkkaHttpServer")
+  implicit val materializer = ActorMaterializer()
 
-    implicit val system = ActorSystem()
-    implicit val timeout = Timeout(DurationInt(5).seconds)
+  val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
+  lazy val serverRoutes: Route = routes
 
-    val config = ConfigFactory.load
-    val portFromEnv = envOrElse("PORT", "") != ""
-    val port = envOrElse("PORT", config.getString("server.port"))
+  val config = ConfigFactory.load
+  val portFromEnv = envOrElse("PORT", "") != ""
+  val port = envOrElse("PORT", config.getString("server.port"))
 
-    //if (!portFromEnv) initializeData
+  //if (!portFromEnv) initializeData
 
-    val server = system.actorOf(Props[WhoWonServiceActor], "whowonRoutes")
+  if (args.length > 0) Http().bindAndHandle(serverRoutes, "0.0.0.0", args(0).toInt)
+  else Http().bindAndHandle(serverRoutes, "0.0.0.0", port.toInt)
 
-    if (args.length > 0) IO(Http) ? Http.Bind(server, "0.0.0.0", args(0).toInt)
-    else IO(Http) ? Http.Bind(server, "0.0.0.0", port.toInt)
-  }
+  Await.result(system.whenTerminated, Duration.Inf)
 
   def importBrackets(year: Int) = {
 
@@ -117,10 +115,8 @@ object WhoWon extends App {
     //importResults(2016)
     //importBrackets(2017)
     //importResults(2017)
-    importBrackets(2018)
+    //importBrackets(2018)
     //importResults(2018)
   }
-
-  doMain
 
 }

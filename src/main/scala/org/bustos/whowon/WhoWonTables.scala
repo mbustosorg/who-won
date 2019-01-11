@@ -22,7 +22,9 @@ package org.bustos.whowon
 import akka.util.ByteString
 import org.joda.time._
 import java.sql.Timestamp
-import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, DateTimeFormatter}
+
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
 
 import scala.slick.driver.MySQLDriver.simple._
 import spray.json._
@@ -39,7 +41,7 @@ object WhoWonTables {
   val Over= "ST-OV"
   val Under = "ST-UN"
 
-  val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.0455").toDouble
+  val StraightBetPayoff = 1.0 - envOrElse("WHOWON_HOUSE_TAKE", "0.09").toDouble
   // Base case classes
   case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
   case class Bracket(bookId: Int, opposingBookId: Int, year: Int, region: String, seed: Int, teamName: String, gameTime: DateTime,
@@ -50,6 +52,7 @@ object WhoWonTables {
                         firstTo15: Boolean, resultTimeStamp: DateTime)
   case object YearsRequest
   // Utility case classes
+  case class Years(years: List[Int])
   case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
   case class BetsRequest(playerId: String, year: Int)
   case class Bets(list: List[BetDisplay])
@@ -97,7 +100,7 @@ object WhoWonTables {
     )
 }
 
-object WhoWonJsonProtocol extends DefaultJsonProtocol {
+trait WhoWonJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
 
   import WhoWonTables._
 

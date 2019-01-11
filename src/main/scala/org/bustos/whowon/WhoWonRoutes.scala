@@ -19,67 +19,34 @@
 
 package org.bustos.whowon
 
-import javax.ws.rs.Path
-
-import akka.actor._
+import akka.actor.{ActorSystem, _}
+import akka.http.scaladsl.model.DateTime
+import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.server.Directive
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.MethodDirectives.{get, post}
+import akka.http.scaladsl.server.directives.PathDirectives.path
+import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.pattern.ask
-import com.gettyimages.spray.swagger.SwaggerHttpService
-import com.wordnik.swagger.annotations._
-import com.wordnik.swagger.model.ApiInfo
+import akka.util.{ByteString, Timeout}
 import org.bustos.whowon.WhoWonTables._
 import org.slf4j.LoggerFactory
-import shapeless.list
-import spray.http.MediaTypes._
-import spray.http.StatusCodes._
-import spray.http.{DateTime, HttpCookie}
 import spray.json._
-import spray.routing._
 
-import scala.reflect.runtime.universe._
+import scala.concurrent.duration._
+import scala.util.Properties.envOrElse
 
-class WhoWonServiceActor extends HttpServiceActor with ActorLogging {
-
-  override def actorRefFactory = context
-
-  val whoWonRoutes = new WhoWonRoutes {
-    def actorRefFactory = context
-  }
-
-  def receive = runRoute(
-    swaggerService.routes ~
-    whoWonRoutes.routes ~
-      get {getFromResourceDirectory("webapp")} ~
-      get {getFromResource("webapp/index.html")})
-
-  val swaggerService = new SwaggerHttpService {
-    override def apiTypes = Seq(typeOf[WhoWonRoutes])
-    override def apiVersion = "1.0"
-    override def baseUrl = "/"
-    override def docsPath = "api-docs"
-    override def actorRefFactory = context
-    override def apiInfo = Some(new ApiInfo("WhoWon Bet Tracking API",
-      "API for interacting with the WhoWon Server.", "", "", "", ""))
-  }
-}
-
-@Api(value = "/", description = "Primary Interface", produces = "application/json")
-trait WhoWonRoutes extends HttpService with UserAuthentication {
-
-  import java.net.InetAddress
-
-  import UserAuthentication._
-  import WhoWonJsonProtocol._
+trait WhoWonRoutes extends WhoWonJsonProtocol {
 
   val logger = LoggerFactory.getLogger(getClass)
-  val system = ActorSystem("whoWonSystem")
+  implicit def system: ActorSystem
+  implicit val timeout = Timeout(5 seconds)
 
-  import system.dispatcher
-
-  val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
+  def whoWonData: ActorRef
 
   val routes = testRoute ~
     postBet ~
-    bets ~
+    getBets ~
     competition ~
     postGameResult ~
     betEntry ~
@@ -91,38 +58,9 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     betProfiles ~
     years ~
     logout ~
-    login
-
-  val authenticationRejection = RejectionHandler {
-    case AuthenticationRejection(message) :: _ => complete(400, message)
-  }
-
-  val authorizationRejection = RejectionHandler {
-    case AuthenticationRejection(message) :: _ => getFromResource("webapp/login.html")
-  }
-
-  val secureCookies: Boolean = {
-    // Don't require HTTPS if running in development
-    val hostname = InetAddress.getLocalHost.getHostName
-    hostname != "localhost" && !hostname.contains("pro")
-  }
-
-  def redirectToHttps: Directive0 = {
-    requestUri.flatMap { uri =>
-      redirect(uri.copy(scheme = "https"), MovedPermanently)
-    }
-  }
-
-  val isHttpsRequest: RequestContext => Boolean = { ctx =>
-    (ctx.request.uri.scheme == "https" || ctx.request.headers.exists(h => h.is("x-forwarded-proto") && h.value == "https")) && secureCookies
-  }
-
-  def enforceHttps: Directive0 = {
-    extract(isHttpsRequest).flatMap(
-      if (_) pass
-      else redirectToHttps
-    )
-  }
+    login ~
+    get {getFromResourceDirectory("webapp")} ~
+    get {getFromResource("webapp/index.html")}
 
   val keyLifespanMillis = 120000 * 1000 // 2000 minutes
   val expiration = DateTime.now + keyLifespanMillis
@@ -130,231 +68,65 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
   val UserKey = "WHOWON_USER"
   val ResponseTextHeader = "{\"responseText\": "
 
-  @Path("test")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Operates connectivity test")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
   def testRoute =
-    path("test") {
-      respondWithMediaType(`application/json`) { ctx =>
-        ctx.complete(ResponseTextHeader + " \"Server is OK\"}")
-      }
+    path("test") { ctx =>
+      ctx.complete(ResponseTextHeader + " \"Server is OK\"}")
     }
 
-  @Path("bets")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a bet for player")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID")
-  ))
-  @ApiResponses(Array())
   def postBet = post {
     path("bets") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
-          respondWithMediaType(`application/json`) { ctx =>
-            val newBet = ctx.request.entity.data.asString.parseJson.convertTo[Bet]
-            val future = whoWonData ? newBet
-            future onSuccess {
-              case BetSubmitted => ctx.complete(200, ResponseTextHeader + "\"Bet Submitted\"}")
-              case BetReplaced => ctx.complete(200, ResponseTextHeader + "\"Bet Replaced\"}")
-              case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
-              case UnknownBookId => ctx.complete(400, ResponseTextHeader + "\"Unknown Book Id\"}")
+          entity(as[Bet]) { bet => {
+            val future = whoWonData ? bet
+            onSuccess(future) {
+              case BetSubmitted => complete(200, ResponseTextHeader + "\"Bet Submitted\"}")
+              case BetReplaced => complete(200, ResponseTextHeader + "\"Bet Replaced\"}")
+              case UnknownPlayer => complete(400, ResponseTextHeader + "\"Unknown Player\"}")
+              case UnknownBookId => complete(400, ResponseTextHeader + "\"Unknown Book Id\"}")
             }
           }
-        }
+        }}
         }
       }}
     }
   }
 
-  @Path("competition")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all players on a bet")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "bet", required = true, dataType = "integer", paramType = "path", value = "Bet ID")
-  ))
-  @ApiResponses(Array())
   def competition = get {
     pathPrefix("competition" / IntNumber / IntNumber) { (year, betID) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? CompetitionRequest(year, betID)
-        future onSuccess {
-          case Competitors(list) => {
-            ctx.complete(list.toJson.toString)
-          }
+      val future = whoWonData ? CompetitionRequest(year, betID)
+      onSuccess(future) {
+        case Competitors(list) => {
+          complete { list }
         }
       }
     }
   }
 
-  @Path("bets/{player}/{year}")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Submitted bets for player")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "player", required = true, dataType = "integer", paramType = "path", value = "Player ID"),
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def bets = get {
+  def getBets = get {
     pathPrefix("bets" / """.*""".r / IntNumber) { (userName, year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? BetsRequest(userName, year)
-        future onSuccess {
-          case Bets(list) => ctx.complete(list.toJson.toString)
-          case UnknownPlayer => ctx.complete(400, ResponseTextHeader + "\"Unknown Player\"}")
-        }
+      val future = whoWonData ? BetsRequest(userName, year)
+      onSuccess(future) {
+        case Bets(list) => complete { list }
+        case UnknownPlayer => complete(400, ResponseTextHeader + "\"Unknown Player\"}")
       }
     }
   }
 
-  @Path("ticket")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a ticket image")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
   def saveTicket = post {
     path("ticket") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
-          handleRejections(authorizationRejection) {
-            authenticate(authenticateSessionId(sessionId.content, username.content)) { authentication =>
-              respondWithMediaType(`application/json`) { ctx =>
-                val future = whoWonData ? TicketImage(username.content, ctx.request.entity.data.toByteString)
-                future onSuccess {
-                  case list: List[Bet] => ctx.complete(list.toJson.toString)
-                  case location: String => ctx.complete(location)
-                  case _ => ctx.complete(400, ResponseTextHeader + "\"Error processing image\"}")
+          entity(as[ByteString]) { imageValue =>
+            authenticateSessionIdUser(username.value, sessionId.value) {
+              (x, y) => {
+                val future = whoWonData ? TicketImage(username.value, imageValue)
+                onSuccess(future) {
+                  case list: List[Bet] => complete { list }
+                  case location: String => complete(location)
+                  case _ => complete(400, ResponseTextHeader + "\"Error processing image\"}")
                 }
-              }}
-          }}
-        }}
-      }} ~ getFromResource("webapp/login.html")
-    }
-
-  @Path("games/{year}")
-  @ApiOperation(httpMethod = "POST", response = classOf[String], value = "Post a game result")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
-  def postGameResult = post {
-    path("games" / IntNumber) { (year) =>
-      cookie("WHOWON_SESSION") { sessionId => {
-        cookie("WHOWON_USER") { username => {
-          respondWithMediaType(`application/json`) { ctx =>
-            val newResult = ctx.request.entity.data.asString.parseJson.convertTo[GameResult]
-            val future = whoWonData ? newResult
-            future onSuccess {
-              case ResultSubmitted => ctx.complete(ResponseTextHeader + "\"Submitted\"}")
-              case _ => ctx.complete(500, ResponseTextHeader + "\"Problem Submitting\"}")
-            }
-          }
-        }
-        }}
-      }}
-  }
-
-  @Path("games/{year}")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all game results for year")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def gamesRequest = get {
-    path("games" / IntNumber) { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? GameResultsRequest(year)
-        future onSuccess {
-          case GameResults(list) => {
-            ctx.complete(list.toJson.toString)
-          }
-        }
-      }
-    }
-  }
-
-  @Path("games/{year}/missing")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get games that don't yet have results")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def missingGamesRequest = get {
-    path("games" / IntNumber / "missing") { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? MissingGameResultsRequest(year)
-        future onSuccess {
-          case BookIdsResults(list) => {
-            ctx.complete(list.toJson.toString)
-          }
-        }
-      }
-    }
-  }
-
-  @Path("bookIds/{year}")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get all book ids for a year")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def bookIds = get {
-    path("bookIds" / IntNumber) { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? BookIdsRequest(year)
-        future onSuccess {
-          case BookIdsResults(list) => {
-            ctx.complete(list.toJson.toString)
-          }
-        }
-      }
-    }
-  }
-
-  @Path("betProfiles")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get bet profiles")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def betProfiles = get {
-    path("betProfiles" /  IntNumber) { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? BetProfilesRequest(year)
-        future onSuccess {
-          case x: BetProfiles => {
-            ctx.complete(x.toJson.toString)
-          }
-        }
-      }
-    }
-  }
-
-  @Path("winnings/{year}")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Get summary winnings results for a year")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "year", required = true, dataType = "integer", paramType = "path", value = "Year")
-  ))
-  @ApiResponses(Array())
-  def winnings = get {
-    path("winnings" / IntNumber) { (year) =>
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? WinningsTrackRequest(year)
-        future onSuccess {
-          case WinningsTrack(timestamps, list) => {
-            ctx.complete(WinningsTrack(timestamps, list).toJson.toString)
-          }
-        }
-      }
-    }
-  }
-
-  @Path("")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Index")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
-  def betEntry = get {
-    path("") {
-      cookie("WHOWON_SESSION") { sessionId => {
-        cookie("WHOWON_USER") { username => {
-          handleRejections(authorizationRejection) {
-            authenticate(authenticateSessionId(sessionId.content, username.content)) { authentication =>
-              getFromResource("webapp/main.html")
+              }
             }
           }
         }
@@ -364,18 +136,96 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     }
   }
 
-  @Path("years")
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Index")
-  @ApiImplicitParams(Array())
-  @ApiResponses(Array())
+  def postGameResult = post {
+    path("games" / IntNumber) { (year) =>
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          entity(as[GameResult]) { newResult =>
+          val future = whoWonData ? newResult
+          onSuccess(future) {
+            case ResultSubmitted => complete(ResponseTextHeader + "\"Submitted\"}")
+            case _ => complete(500, ResponseTextHeader + "\"Problem Submitting\"}")
+          }
+        }
+        }}
+      }}
+  }}
+
+  def gamesRequest = get {
+    path("games" / IntNumber) { (year) =>
+      val future = whoWonData ? GameResultsRequest(year)
+      onSuccess(future) {
+        case GameResults(list) => {
+          complete { list }
+        }
+      }
+    }
+  }
+
+  def missingGamesRequest = get {
+    path("games" / IntNumber / "missing") { (year) =>
+      val future = whoWonData ? MissingGameResultsRequest(year)
+      onSuccess(future) {
+        case BookIdsResults(list) => {
+          complete { list }
+        }
+      }
+    }
+  }
+
+  def bookIds = get {
+    path("bookIds" / IntNumber) { (year) =>
+      val future = whoWonData ? BookIdsRequest(year)
+      onSuccess(future) {
+        case BookIdsResults(list) => {
+          complete { list }
+        }
+      }
+    }
+  }
+
+  def betProfiles = get {
+    path("betProfiles" /  IntNumber) { (year) =>
+      val future = whoWonData ? BetProfilesRequest(year)
+      onSuccess(future) {
+        case x: BetProfiles => {
+          complete { x.toJson }
+        }
+      }
+    }
+  }
+
+  def winnings = get {
+    path("winnings" / IntNumber) { (year) =>
+      val future = whoWonData ? WinningsTrackRequest(year)
+      onSuccess(future) {
+        case WinningsTrack(timestamps, list) => {
+          complete { WinningsTrack(timestamps, list) }
+        }
+      }
+    }
+  }
+
+  def betEntry = get {
+    path("") {
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          authenticateSessionIdUser(username.value, sessionId.value) {
+            (x, y) => getFromResource("webapp/main.html")
+          }
+        }}
+      }} ~ getFromResource("webapp/login.html")
+    }
+  }
+
   def years = get {
     path("years") {
-      respondWithMediaType(`application/json`) { ctx =>
-        val future = whoWonData ? YearsRequest
-        future onSuccess {
-          case x: List[Int] => ctx.complete(x.toJson.toString)
-          case _ => ctx.complete(400, ResponseTextHeader + "\"Problem Submitting\"}")
+      val future = whoWonData ? YearsRequest
+      onSuccess(future) {
+        case x: Years => {
+          complete { x.years }
         }
+        case _ => complete(400, ResponseTextHeader + "\"Problem Submitting\"}")
       }
     }
   }
@@ -384,49 +234,70 @@ trait WhoWonRoutes extends HttpService with UserAuthentication {
     path("logout") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
-        removeSession(username.content)
+          removeSession(username.value)
           complete("/login")
-        }
-      }
-      }
-      }
-    }}
+  }}}}}}
 
   def admin = get {
     path("admin") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
-          handleRejections(authorizationRejection) {
-            authenticate(authenticateSessionId(sessionId.content, username.content)) { authentication =>
-              getFromResource("webapp/admin.html")
-            }
+          authenticateSessionIdUser(username.value, sessionId.value) {
+            (x, y) => getFromResource("webapp/admin.html")
           }
-        }
-        }
-      }
-      } ~ getFromResource("webapp/login.html")
-    }
+        }}
+      }}
+    } ~ getFromResource("webapp/login.html")
   }
 
-  def login =
-    post {
+  def login = post {
       path("login") {
         formFields('inputName, 'inputPassword) { (inputName, inputPassword) =>
-          handleRejections(authenticationRejection) {
-            authenticate(authenticateUser(inputName, inputPassword)) { authentication =>
-              setCookie(HttpCookie(SessionKey, content = authentication.token, expires = Some(expiration))) {
-                setCookie(HttpCookie(UserKey, content = inputName, expires = Some(expiration))) { ctx =>
+          authenticateUser(inputName, inputPassword) {
+            (x, y) => {
+              setCookie(HttpCookie(SessionKey, value = y, expires = Some(expiration))) {
+                setCookie(HttpCookie(UserKey, value = x, expires = Some(expiration))) {
                   val future = whoWonData ? PlayerIdRequest(inputName)
-                  future onSuccess {
-                    case x: Player => ctx.complete("")
-                    case x: UnknownPlayer => ctx.complete(400, "Unknown Player")
+                  onSuccess(future) {
+                    case x: Player => complete("")
+                    case x: UnknownPlayer => complete(400, "Unknown Player")
                   }
                 }
               }
             }
-          }
-        }
+          } ~ complete(400, "Bad player or password")
+        } ~ complete(400, "Name and password not supplied")
       }
     }
+
+  def authentications = {
+    val userPWD = envOrElse("WHOWON_USER_PASSWORDS", "mauricio,2015")
+    userPWD.split(";").map(_.split(",")).map({ x => (x(0), x(1)) }).toMap
+  }
+
+  var sessionIds = Map.empty[String, String]
+
+  def removeSession(email: String) = {
+    sessionIds -= email
+  }
+
+  def authenticateSessionIdUser(userName: String, sessionId: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
+    if (sessionIds.contains(userName)) {
+      if (sessionIds(userName) == sessionId) {
+        inner((userName, sessionId))(ctx)
+      } else ctx.reject()
+    } else ctx.reject()
+  }
+
+  def authenticateUser(userName: String, password: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
+    if (authentications.contains(userName)) {
+      if (authentications(userName) == password) {
+        val sessionId = java.util.UUID.randomUUID.toString
+        sessionIds += (userName -> sessionId)
+        inner((userName, sessionId))(ctx)
+      } else ctx.reject()
+    }
+    else ctx.reject()
+  }
 
 }
