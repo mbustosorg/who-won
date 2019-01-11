@@ -1,15 +1,17 @@
 package org.bustos.whowon
 
-import akka.actor.Props
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.{FormData, StatusCodes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.scalatest.{Matchers, WordSpec}
+import scala.concurrent.duration._
 
 class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest with WhoWonRoutes {
 
   def actorRefFactory = system
   def context = actorRefFactory
   val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(5 seconds)
 
   "The service should " should {
 
