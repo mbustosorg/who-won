@@ -1,6 +1,6 @@
 *.iml
 *.png
-*.csv
+data/
 *.numbers
 *.class
 *.log
