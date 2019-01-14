@@ -1,9 +1,12 @@
 package org.bustos.whowon
 
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.model.{FormData, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.util.ByteString
+import org.bustos.whowon.WhoWonData._
 import org.scalatest.{Matchers, WordSpec}
+
 import scala.concurrent.duration._
 
 class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest with WhoWonRoutes {
@@ -15,6 +18,18 @@ class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest wi
 
   "The service should " should {
 
+    "be running on a dev database" in {
+      WhoWonData.devDb shouldEqual true
+      if (WhoWonData.devDb) {
+        initializeData
+        importResults(2019)
+        importBrackets(2019)
+      } else {
+        System.exit(1)
+      }
+    }
+
+    val testYear = "2019"
     val sessionPattern = """WHOWON_SESSION=(.*);.*""".r
     val userPattern = """WHOWON_USER=(.*);.*""".r
 
@@ -85,39 +100,69 @@ class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest wi
     }
 
     "get winnings" in {
-      Get("/winnings/2017") ~>
+      Get("/winnings/" + testYear) ~>
         routes ~> check {
         responseAs[String] should include ("timestamps")
       }
     }
 
     "get profiles" in {
-      Get("/betProfiles/2017") ~>
+      Get("/betProfiles/" + testYear) ~>
         routes ~> check {
         responseAs[String] should include ("largest")
       }
     }
 
     "get bookIds" in {
-      Get("/bookIds/2017") ~>
+      Get("/bookIds/" + testYear) ~>
         routes ~> check {
         responseAs[String] should include ("seed")
       }
     }
 
     "get missingGames" in {
-      Get("/games/2017/missing") ~>
+      Get("/games/" + testYear + "/missing") ~>
         routes ~> check {
         responseAs[String] should include ("seed")
       }
     }
 
     "get games" in {
-      Get("/games/2016") ~>
+      Get("/games/" + testYear) ~>
         routes ~> check {
         val r = responseAs[String]
         responseAs[String] should include ("undScore")
       }
+    }
+
+    def submitBet(jsonRequest: ByteString): Unit = {
+      val postRequest = HttpRequest(HttpMethods.POST, uri = "/bets", entity = HttpEntity(MediaTypes.`application/json`, jsonRequest))
+
+      postRequest ~>
+        addHeader("Cookie", "WHOWON_SESSION=XXX") ~>
+        addHeader("Cookie", "WHOWON_USER=" + userId) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+      }
+    }
+
+    "submit straight bet" in {
+      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-01-14T04:59:52.222Z"}""".stripMargin))
+    }
+
+    "submit straight over/under bet" in {
+      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-01-14T05:37:00.352Z"}""".stripMargin))
+    }
+
+    "submit moneyline bet" in {
+      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 100, "amount": 1, "betType": "ML", "timestamp": "2019-01-14T05:29:21.552Z"}""".stripMargin))
+    }
+
+    "submit 1st half bet" in {
+      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 100, "amount": 1, "betType": "ML-1H", "timestamp": "2019-01-14T05:40:00.751Z"}""".stripMargin))
+    }
+
+    "subtmit 1st to 15 bet" in {
+      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear  + """, "spread_ml": 100, "amount": 1, "betType": "ML-15", "timestamp": "2019-01-14T05:41:41.598Z"}""".stripMargin))
     }
 
     "be able to logout a user" in {

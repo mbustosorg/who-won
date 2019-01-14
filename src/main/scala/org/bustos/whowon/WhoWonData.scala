@@ -26,6 +26,7 @@ import akka.util.Timeout
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.PutObjectRequest
+import com.github.tototoshi.csv.CSVReader
 import org.bustos.whowon.ImageResize.resize
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
@@ -39,6 +40,10 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.util.Properties.envOrElse
 
 object WhoWonData {
+
+  import WhoWonTables._
+
+  val logger =  LoggerFactory.getLogger(getClass)
 
   val quarterMile = 1.0 / 60.0 / 4.0 // In degrees
   val TicketImageDestination = "src/main/resources/webapp/tickets/"
@@ -54,9 +59,70 @@ object WhoWonData {
     Database.forURL(mysqlURL, driver = "com.mysql.jdbc.Driver", user = mysqlUser, password = mysqlPassword)
   }
 
+  val devDb = {
+    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon").contains("_dev")
+  }
+
   val s3 = new AmazonS3Client;
   val usWest2 = Region.getRegion(Regions.US_WEST_2)
   val S3bucket = "who-won-tickets"
+
+  def importBrackets(year: Int) = {
+
+    db.withSession { implicit session =>
+      bracketsTable.filter(_.year === year).delete
+      val reader = CSVReader.open(new File("data/" + year + "_dev/brackets.csv"))
+      reader.allWithHeaders.foreach(fields => {
+        logger.info(fields.toString)
+        val timestamp = {
+          try {
+            formatter.parseDateTime(fields("gameTime"))
+          } catch {
+            case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+          }
+        }
+        bracketsTable += WhoWonTables.Bracket(fields("bookId").toInt, fields("opposingBookId").toInt, fields("year").toInt,
+          fields("region"), fields("seed").toInt, fields("teamName"), timestamp,
+          fields("firstHalf").toInt, fields("secondHalf").toInt, fields("firstTo15").toInt,
+          fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
+      })
+    }
+  }
+
+  def importResults(year: Int) = {
+
+    db.withSession { implicit session =>
+      resultsTable.filter(_.year === year).delete
+      val reader = CSVReader.open(new File("data/" + year + "_dev/results.csv"))
+      reader.allWithHeaders.filter { fields => !fields("year").isEmpty } foreach(fields => {
+        logger.info(fields.toString)
+        val timestamp = {
+          try {
+            formatter.parseDateTime(fields("resultTimeStamp"))
+          } catch {
+            case _: Exception => ccyyFormatter.parseDateTime(fields("resultTimeStamp"))
+          }
+        }
+        resultsTable += WhoWonTables.GameResult(fields("year").toInt,
+          fields("bookId").toInt, fields("finalScore").toInt, fields("firstHalfScore").toInt,
+          fields("opposingBookId").toInt, fields("opposingFinalScore").toInt, fields("opposingFirstHalfScore").toInt,
+          fields("firstTo15").toBoolean, timestamp)
+      })
+    }
+  }
+
+  def initializeData = {
+
+    db.withSession { implicit session =>
+      betsTable.delete
+      playersTable.delete
+      val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
+      reader.foreach(fields => {
+        logger.info(fields.toString)
+        playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
+      })
+    }
+  }
 
 }
 

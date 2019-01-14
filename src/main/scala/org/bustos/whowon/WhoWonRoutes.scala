@@ -59,14 +59,51 @@ trait WhoWonRoutes extends WhoWonJsonProtocol {
     years ~
     logout ~
     login ~
-    get {getFromResourceDirectory("webapp")} ~
-    get {getFromResource("webapp/index.html")}
+    get {getFromResourceDirectory("webapp")}
 
   val keyLifespanMillis = 120000 * 1000 // 2000 minutes
   val expiration = DateTime.now + keyLifespanMillis
   val SessionKey = "WHOWON_SESSION"
   val UserKey = "WHOWON_USER"
   val ResponseTextHeader = "{\"responseText\": "
+
+  def authentications = {
+    val userPWD = envOrElse("WHOWON_USER_PASSWORDS", "mauricio,2015")
+    userPWD.split(";").map(_.split(",")).map({ x => (x(0), x(1)) }).toMap
+  }
+
+  var sessionIds = Map.empty[String, String]
+
+  def removeSession(email: String) = {
+    sessionIds -= email
+  }
+
+  def authenticateSessionAdminUser(userName: String, sessionId: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
+    if (sessionIds.contains(userName) && userName == "mauricio") {
+      if (sessionIds(userName) == sessionId) {
+        inner((userName, sessionId))(ctx)
+      } else ctx.reject()
+    } else ctx.reject()
+  }
+
+  def authenticateSessionIdUser(userName: String, sessionId: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
+    if (sessionIds.contains(userName)) {
+      if (sessionIds(userName) == sessionId) {
+        inner((userName, sessionId))(ctx)
+      } else ctx.reject()
+    } else ctx.reject()
+  }
+
+  def authenticateUser(userName: String, password: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
+    if (authentications.contains(userName)) {
+      if (authentications(userName) == password) {
+        val sessionId = java.util.UUID.randomUUID.toString
+        sessionIds += (userName -> sessionId)
+        inner((userName, sessionId))(ctx)
+      } else ctx.reject()
+    }
+    else ctx.reject()
+  }
 
   def testRoute =
     path("test") { ctx =>
@@ -105,13 +142,15 @@ trait WhoWonRoutes extends WhoWonJsonProtocol {
 
   def getBets = get {
     pathPrefix("bets" / """.*""".r / IntNumber) { (userName, year) =>
-      val future = whoWonData ? BetsRequest(userName, year)
-      onSuccess(future) {
-        case Bets(list) => complete { list }
-        case UnknownPlayer => complete(400, ResponseTextHeader + "\"Unknown Player\"}")
-      }
-    }
-  }
+      cookie("WHOWON_SESSION") { sessionId => {
+        cookie("WHOWON_USER") { username => {
+          authenticateSessionIdUser(username.value, sessionId.value) {
+            (x, y) => {
+              val future = whoWonData ? BetsRequest(userName, year)
+              onSuccess(future) {
+                case Bets(list) => complete { list }
+                case UnknownPlayer => complete(400, ResponseTextHeader + "\"Unknown Player\"}")
+    }}}}}}}}}
 
   def saveTicket = post {
     path("ticket") {
@@ -234,21 +273,10 @@ trait WhoWonRoutes extends WhoWonJsonProtocol {
     path("logout") {
       cookie("WHOWON_SESSION") { sessionId => {
         cookie("WHOWON_USER") { username => {
-          removeSession(username.value)
-          complete("/login")
-  }}}}}}
-
-  def admin = get {
-    path("admin") {
-      cookie("WHOWON_SESSION") { sessionId => {
-        cookie("WHOWON_USER") { username => {
-          authenticateSessionIdUser(username.value, sessionId.value) {
-            (x, y) => getFromResource("webapp/admin.html")
-          }
-        }}
-      }}
-    } ~ getFromResource("webapp/login.html")
-  }
+          setCookie(HttpCookie(SessionKey, value = "", expires = Some(expiration))) {
+            removeSession(username.value)
+            complete("/login")
+          }}}}}}}
 
   def login = post {
       path("login") {
@@ -269,35 +297,5 @@ trait WhoWonRoutes extends WhoWonJsonProtocol {
         } ~ complete(400, "Name and password not supplied")
       }
     }
-
-  def authentications = {
-    val userPWD = envOrElse("WHOWON_USER_PASSWORDS", "mauricio,2015")
-    userPWD.split(";").map(_.split(",")).map({ x => (x(0), x(1)) }).toMap
-  }
-
-  var sessionIds = Map.empty[String, String]
-
-  def removeSession(email: String) = {
-    sessionIds -= email
-  }
-
-  def authenticateSessionIdUser(userName: String, sessionId: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
-    if (sessionIds.contains(userName)) {
-      if (sessionIds(userName) == sessionId) {
-        inner((userName, sessionId))(ctx)
-      } else ctx.reject()
-    } else ctx.reject()
-  }
-
-  def authenticateUser(userName: String, password: String): Directive[(String, String)] = Directive[(String, String)] { inner => ctx =>
-    if (authentications.contains(userName)) {
-      if (authentications(userName) == password) {
-        val sessionId = java.util.UUID.randomUUID.toString
-        sessionIds += (userName -> sessionId)
-        inner((userName, sessionId))(ctx)
-      } else ctx.reject()
-    }
-    else ctx.reject()
-  }
 
 }

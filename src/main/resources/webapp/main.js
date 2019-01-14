@@ -269,34 +269,60 @@ $(document).ready(function() {
         $('#spread-label').text('Spread');
     });
 
+    var opposingGames = {}
+
+    $('#resultsBookId').change(function() {
+        var bookId = $('#resultsBookId').val().split(' ')[0];
+        var opposingGame = opposingGames[bookId];
+        $('#resultsOpposingBookId').empty();
+        $('#firstTo15').empty();
+        var labelString = opposingGame.bookId + ' - ' + opposingGame.teamName;
+        $('#resultsOpposingBookId').append(
+            '<option value =\"' + labelString + '\">' + labelString + '</option>'
+        );
+        $('#firstTo15').append(
+            '<option value =\"' + $('#resultsBookId').val() + '\">' + $('#resultsBookId').val() + '</option>'
+        );
+        $('#firstTo15').append(
+            '<option value =\"' + labelString + '\">' + labelString + '</option>'
+        );
+    });
+
     function updateMissingResults() {
         $.ajax({
             url: '/games/' + year() + '/missing'
         }).done(function(results) {
+            opposingGames = {};
             $('#resultsBookId').empty();
             $('#resultsOpposingBookId').empty();
             $('#firstTo15').empty();
+            $('#resultsBookId').append('<option value =\"\"></option>');
             $.each(results, function(key, currentGame) {
+                opposingGames[currentGame.opposingBookId] = currentGame;
                 var labelString = currentGame.bookId + ' - ' + currentGame.teamName;
                 $('#resultsBookId').append(
-                    '<option value =\"' + labelString + '\">' + labelString + '</option>'
-                );
-                $('#resultsOpposingBookId').append(
-                    '<option value =\"' + labelString + '\">' + labelString + '</option>'
-                );
-                $('#firstTo15').append(
                     '<option value =\"' + labelString + '\">' + labelString + '</option>'
                 );
             });
             $('#selectedScore').empty();
             $('#selectedScore').append('<option value =\"0\">0</option>');
+            $('#selectedFirstHalfScore').empty();
+            $('#selectedFirstHalfScore').append('<option value =\"0\">0</option>');
             $('#opposingScore').empty();
             $('#opposingScore').append('<option value =\"0\">0</option>');
+            $('#opposingFirstHalfScore').empty();
+            $('#opposingFirstHalfScore').append('<option value =\"0\">0</option>');
             for (i = 20; i < 150; i = i + 1) {
                 $('#selectedScore').append(
                     '<option value =\"' + i + '\">' + i + '</option>'
                 );
                 $('#opposingScore').append(
+                    '<option value =\"' + i + '\">' + i + '</option>'
+                );
+                $('#selectedFirstHalfScore').append(
+                    '<option value =\"' + i + '\">' + i + '</option>'
+                );
+                $('#opposingFirstHalfScore').append(
                     '<option value =\"' + i + '\">' + i + '</option>'
                 );
             }
@@ -454,10 +480,10 @@ $(document).ready(function() {
     $('#resultsSubmit').click(function() {
         var bookId = $('#resultsBookId').val().split(' ')[0];
         var selectedScore = $('#selectedScore').val();
-        var selectedFirstHalfScore = 0;//$('#selectedFirstHalfScore').val();
+        var selectedFirstHalfScore = $('#selectedFirstHalfScore').val();
         var opposingBookId = $('#resultsOpposingBookId').val().split(' ')[0];
         var opposingScore = $('#opposingScore').val();
-        var opposingFirstHalfScore = 0;//$('#opposingFirstHalfScore').val();
+        var opposingFirstHalfScore = $('#opposingFirstHalfScore').val();
         var firstTo15 = $('#firstTo15').val().split(' ')[0];
         var timestamp = (new Date()).toISOString();
         if (bookId == opposingBookId) {
