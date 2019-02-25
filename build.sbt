@@ -12,7 +12,6 @@ lazy val mainProject = (project in file("."))
     .settings(name := "who-won")
     .settings(commonSettings: _*)
     .settings(libraryDependencies ++= projectLibraries)
-    .settings(resolvers += "Spray" at "http://repo.spray.io")
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
