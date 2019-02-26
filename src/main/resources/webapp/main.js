@@ -768,7 +768,7 @@ $(document).ready(function() {
                     });
                     $('#' + this.id).addClass('active');
                     $('#yearDropdownLabel').html(this.textContent + "<span class=\"caret\"></span>");
-                    if ($('#report').removeClass('hide') {
+                    if ($('#report').removeClass('hide')) {
                         updateWinnings();
                     } else {
                         displayCurrentBets();
