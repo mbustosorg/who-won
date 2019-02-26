@@ -598,7 +598,7 @@ $(document).ready(function() {
                             '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
                             '</tr>';
                     } else {
-                        var span = $('#bets' + currentBet + ' span');
+                        var span = $('#bets' + currentBet.bet.bookId + ' span');
                         if (span.hasClass('glyphicon-plus')) {
                             span.removeClass('glyphicon-plus');
                             span.addClass('glyphicon-minus');
