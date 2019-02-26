@@ -599,9 +599,9 @@ $(document).ready(function() {
                             '</tr>';
                     } else {
                         var span = $('#bets' + currentBet.bet.bookId + ' span');
-                        if (span.hasClass('glyphicon-plus')) {
-                            span.removeClass('glyphicon-plus');
-                            span.addClass('glyphicon-minus');
+                        if (span.hasClass('glyphicon-minus')) {
+                            span.addClass('glyphicon-plus');
+                            span.removeClass('glyphicon-minus');
                         }
                     }
                 });
