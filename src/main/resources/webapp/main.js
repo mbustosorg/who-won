@@ -205,6 +205,7 @@ $(document).ready(function() {
     });
 
     $('#entryPageNav').click(function() {
+        $('#navbar').removeClass('in');
         $('#betEntry').removeClass('hide');
         $('#report').addClass('hide');
         $('#admin').addClass('hide');
@@ -214,6 +215,7 @@ $(document).ready(function() {
         $('#logoutNav').removeClass('active');
     });
     $('#reportPageNav').click(function() {
+        $('#navbar').removeClass('in');
         $('#betEntry').addClass('hide');
         $('#report').removeClass('hide');
         $('#admin').addClass('hide');
@@ -224,6 +226,7 @@ $(document).ready(function() {
         updateWinnings();
     });
     $('#adminPageNav').click(function() {
+        $('#navbar').removeClass('in');
         $('#report').addClass('hide');
         $('#betEntry').addClass('hide');
         $('#admin').removeClass('hide');
@@ -753,6 +756,7 @@ $(document).ready(function() {
                     );
                 }
                 $('#year_' + year).click(function(event) {
+                    $('#navbar').removeClass('in');
                     $.each(this.parentNode.childNodes, function (index, node) {
                         $('#' + node.id).removeClass('active');
                     });
