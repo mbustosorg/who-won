@@ -744,9 +744,9 @@ $(document).ready(function() {
 			$.each(results, function(key, year) {
 			    if (results[0] == year) {
                     $('#years').append(
-                        '<li class=\"active\" value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
+                        '<li value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
                     );
-                    $('#yearDropdownLabel').html(year);
+                    $('#yearDropdownLabel').html(year + "<span class=\"caret\"></span>");
 			    } else {
                     $('#years').append(
                         '<li value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
@@ -757,7 +757,7 @@ $(document).ready(function() {
                         $('#' + node.id).removeClass('active');
                     });
                     $('#' + this.id).addClass('active');
-                    $('#yearDropdownLabel').html(this.textContent);
+                    $('#yearDropdownLabel').html(this.textContent + "<span class=\"caret\"></span>");
                     displayCurrentBets();
                     displayGameResults();
                     populateBookIds();

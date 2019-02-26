@@ -25,24 +25,22 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-                <span class="icon-bar"></span>
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="#">Who Won?</a>
         </div>
-        <div class="collapse navbar-collapse" id="myNavbar">
+        <div id="navbar" class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
                 <li class="active" id="entryPageNav"><a href="#entryPage">Entry </a></li>
                 <li id="reportPageNav"><a href="#reportPage">Report </a></li>
                 <li id="adminPageNav"><a href="#adminPage">Admin </a></li>
                 <li id="logoutNav"><a href="#logout">Logout </a></li>
                 <li class="dropdown" id="yearDropdownList">
-                    <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" id="yearDropdownLabel">Year <span class="caret"></span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" id="yearDropdownLabel">Year <span class="caret"></span></a>
                     <ul class="dropdown-menu" id="years">
-                        <li class="active"><a href="#">2019</a></li>
-                        <li><a href="#">2016</a></li>
+                        <li><a href="#">2019</a></li>
                     </ul>
                 </li>
             </ul>
