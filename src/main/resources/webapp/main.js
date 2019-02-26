@@ -599,7 +599,7 @@ $(document).ready(function() {
                             '</tr>';
                     } else {
                         var span = $('#bets' + currentBet.bet.bookId + ' span');
-                        if (span.hasClass('glyphicon-minus')) {
+                        if (span.hasClass('glyphicon-minus') && currentBet.bet.bookId != bet) {
                             span.addClass('glyphicon-plus');
                             span.removeClass('glyphicon-minus');
                         }
