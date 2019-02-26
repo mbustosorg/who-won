@@ -381,11 +381,10 @@ class WhoWonData extends Actor with ActorLogging {
         val gameResults = resultsTable.filter(x => {
           x.year === year && (x.bookId === bet || x.bookId === opposingBookId)
         }).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
-        val bets =
-          betsTable.filter({ x => (x.bookId === bet || x.bookId === opposingBookId) && x.year === year }).list.map({ bet =>
-            if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
-            else betResult(bet, None)
-          })
+        betsTable.filter({ x => (x.bookId === bet || x.bookId === opposingBookId) && x.year === year }).list.map({ bet =>
+          if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
+          else betResult(bet, None)
+        })
       }
       sender ! Competitors(bets)
   }
