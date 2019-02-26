@@ -597,7 +597,13 @@ $(document).ready(function() {
                             '<td>$' + currentBet.bet.amount + '</td>' +
                             '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
                             '</tr>';
-                    };
+                    } else {
+                        var span = $('#bets' + currentBet + ' span');
+                        if (span.hasClass('glyphicon-plus')) {
+                            span.removeClass('glyphicon-plus');
+                            span.addClass('glyphicon-minus');
+                        }
+                    }
                 });
                 $('[id^=competitors]').remove();
                 $('#bets' + bet).after(newTable);
@@ -762,9 +768,13 @@ $(document).ready(function() {
                     });
                     $('#' + this.id).addClass('active');
                     $('#yearDropdownLabel').html(this.textContent + "<span class=\"caret\"></span>");
-                    displayCurrentBets();
-                    displayGameResults();
-                    populateBookIds();
+                    if ($('#report').removeClass('hide') {
+                        updateWinnings();
+                    } else {
+                        displayCurrentBets();
+                        displayGameResults();
+                        populateBookIds();
+                    }
                 });
  			});
 		});

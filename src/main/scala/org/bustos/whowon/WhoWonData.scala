@@ -374,18 +374,19 @@ class WhoWonData extends Actor with ActorLogging {
       //sender ! thisYear.getYear :: years
       sender ! Years(List(2019, 2018, 2016))
     case CompetitionRequest(year, bet) =>
-      val opposingBookId = db.withSession { implicit session =>
-        bracketsTable.filter( x => { x.bookId === bet && x.year === year }).list.head.opposingBookId
-      }
-      val gameResults = db.withSession { implicit session =>
-        resultsTable.filter( x => { x.year === year && (x.bookId === bet || x.bookId === opposingBookId) }).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
-      }
       val bets = db.withSession { implicit session =>
-        betsTable.filter({ x => (x.bookId === bet || x.bookId === opposingBookId) && x.year === year }).list
-      }.map({ bet =>
-        if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
-        else betResult(bet, None)
-      })
+        val opposingBookId = bracketsTable.filter(x => {
+          x.bookId === bet && x.year === year
+        }).list.head.opposingBookId
+        val gameResults = resultsTable.filter(x => {
+          x.year === year && (x.bookId === bet || x.bookId === opposingBookId)
+        }).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
+        val bets =
+          betsTable.filter({ x => (x.bookId === bet || x.bookId === opposingBookId) && x.year === year }).list.map({ bet =>
+            if (gameResults.contains(bet.bookId)) betResult(bet, Some(gameResults(bet.bookId)))
+            else betResult(bet, None)
+          })
+      }
       sender ! Competitors(bets)
   }
 }
