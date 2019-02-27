@@ -574,9 +574,9 @@ $(document).ready(function() {
 
     function displayCompetitors(e) {
         $('[id^=competitors]').remove();
-        $('[id^=bets][id^=span]').removeClass('glyphicon-plus');
-        $('[id^=bets][id^=span]').removeClass('glyphicon-minus');
-        $('[id^=bets][id^=span]').addClass('glyphicon-plus');
+        $('[id^=button][id$=span]').removeClass('glyphicon-plus');
+        $('[id^=button][id$=span]').removeClass('glyphicon-minus');
+        $('[id^=button][id$=span]').addClass('glyphicon-plus');
         var span = $('#' + e.currentTarget.id + ' span');
         span.removeClass('glyphicon-plus');
         span.addClass('glyphicon-minus');
