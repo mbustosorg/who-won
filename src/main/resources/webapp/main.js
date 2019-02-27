@@ -573,46 +573,38 @@ $(document).ready(function() {
     };
 
     function displayCompetitors(e) {
-        var bet = e.currentTarget.id.replace('button', '');
+        $('[id^=competitors]').remove();
+        $('[id^=bets]').removeClass('glyphicon-plus');
+        $('[id^=bets]').removeClass('glyphicon-minus');
+        $('[id^=bets]').addClass('glyphicon-plus');
         var span = $('#' + e.currentTarget.id + ' span');
-        if (span.hasClass('glyphicon-plus')) {
-            span.removeClass('glyphicon-plus');
-            span.addClass('glyphicon-minus');
-            $.ajax({
-                type: "GET",
-                url: '/competition/' + year() + '/' + bet,
-                cache: false
-            }).done (function (bets, bet) {
-                var newTable = '';
-                var userName = getCookie("WHOWON_USER");
-                $.each(bets, function(key, currentBet) {
-                    if (userName != currentBet.bet.userName) {
-                        newTable = newTable +
-                            '<tr id="competitors_' + bet + '_' + i + '">' +
-                            '<td></td>' +
-                            '<td>' + currentBet.bet.userName + '</td>' +
-                            '<td>' + currentBet.bracket.teamName + '</td>' +
-                            '<td>' + currentBet.bet.betType + '</td>' +
-                            '<td>' + currentBet.bet.spread_ml + '</td>' +
-                            '<td>$' + currentBet.bet.amount + '</td>' +
-                            '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
-                            '</tr>';
-                    } else {
-                        var span = $('#bets' + currentBet.bet.bookId + ' span');
-                        if (span.hasClass('glyphicon-minus') && currentBet.bet.bookId != bet) {
-                            span.addClass('glyphicon-plus');
-                            span.removeClass('glyphicon-minus');
-                        }
-                    }
-                });
-                $('[id^=competitors]').remove();
-                $('#bets' + bet).after(newTable);
+        span.removeClass('glyphicon-minus');
+        span.addClass('glyphicon-minus');
+        var bet = e.currentTarget.id.replace('button', '');
+        $.ajax({
+            type: 'GET',
+            url: '/competition/' + year() + '/' + bet,
+            cache: false
+        }).done (function (bets) {
+            var newTable = '';
+            var userName = getCookie("WHOWON_USER");
+            $.each(bets, function(key, currentBet) {
+                if (userName != currentBet.bet.userName) {
+                    newTable = newTable +
+                        '<tr id="competitors_' + bet + '_' + i + '">' +
+                        '<td></td>' +
+                        '<td>' + currentBet.bet.userName + '</td>' +
+                        '<td>' + currentBet.bracket.teamName + '</td>' +
+                        '<td>' + currentBet.bet.betType + '</td>' +
+                        '<td>' + currentBet.bet.spread_ml + '</td>' +
+                        '<td>$' + currentBet.bet.amount + '</td>' +
+                        '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
+                        '</tr>';
+                }
             });
-        } else {
-            span.addClass('glyphicon-plus');
-            span.removeClass('glyphicon-minus');
             $('[id^=competitors]').remove();
-        }
+            $('#bets' + bet).after(newTable);
+        });
     };
 
     function displayCurrentBets() {
