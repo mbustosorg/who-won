@@ -582,7 +582,7 @@ $(document).ready(function() {
                 type: "GET",
                 url: '/competition/' + year() + '/' + bet,
                 cache: false
-            }).done (function (bets) {
+            }).done (function (bets, bet) {
                 var newTable = '';
                 var userName = getCookie("WHOWON_USER");
                 $.each(bets, function(key, currentBet) {
