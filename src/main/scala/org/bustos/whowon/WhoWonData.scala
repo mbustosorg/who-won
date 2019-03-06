@@ -131,7 +131,7 @@ class WhoWonData extends Actor with ActorLogging {
   import WhoWonData._
   import WhoWonTables._
 
-  val logger =  LoggerFactory.getLogger(getClass)
+  val logger =  LoggerFactory.getLogger("who-won")
 
   val ocrApi = new OcrAPI
 
@@ -329,14 +329,17 @@ class WhoWonData extends Actor with ActorLogging {
       if (player.isEmpty) sender ! UnknownPlayer
       else sender ! player.head
     case TicketImage(name, image) =>
-      logger.info("Storing image for " + name)
+      logger.info("Computing small ticket image for " + name)
       val decodedString = image.decodeString("ISO_8859_1").replaceAll("\"", "")
+
       val destinationDirectory = new File(TicketImageDestination)
       if (!destinationDirectory.exists) destinationDirectory.mkdir
       val directory = new File(TicketImageDestination + name)
       if (!directory.exists) directory.mkdir
+
       val dateString = filedateFormatter.print(new DateTime)
       val filePath = TicketImageDestination + name + "/ticket_" + dateString + ".png"
+
       val decodedFile = new File(filePath)
       val decoded = new BASE64Decoder().decodeBuffer(decodedString)
       val decodedStream = new FileOutputStream(decodedFile)
@@ -344,10 +347,11 @@ class WhoWonData extends Actor with ActorLogging {
       decodedStream.close()
       val smallName = filePath.replaceAll(".jpg", "_small.jpg").replaceAll(".png", "_small.png").replaceAll("original", "resized")
       val newImage = resize(filePath, smallName, 0.4)
-      val key = name + "/ticket_" + dateString + ".png"
+      logger.info("Complete")
       val bet = ocrApi.detectedBet(smallName)
-      s3.putObject(new PutObjectRequest(S3bucket, key, new File(smallName)))
       sender ! List(bet)
+      val key = name + "/ticket_" + dateString + ".png"
+      s3.putObject(new PutObjectRequest(S3bucket, key, new File(smallName)))
     case BetProfilesRequest(year) =>
       val betCounts: List[(String, Double, Int)] = db.withSession { implicit session =>
         betsTable
