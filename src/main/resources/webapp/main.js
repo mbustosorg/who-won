@@ -460,7 +460,7 @@ $(document).ready(function() {
             $.ajax({
                 type: "POST",
                 url: '/ticket',
-                dataType: 'json',
+                contentType: 'application/json',
                 data: imgData
             }).done(function(results) {
                 var result = '\n\nBook Id: ' + results[0].bookId + '\n' +
@@ -506,7 +506,7 @@ $(document).ready(function() {
             $.ajax({
                 type: "POST",
                 url: '/games/' + year(),
-                dataType: 'json',
+                contentType: 'application/json',
                 data: gameResult
             }).done(function(results) {
                 $('#resultsRunningQuery').addClass('hide');
@@ -551,7 +551,7 @@ $(document).ready(function() {
         $.ajax({
             type: "POST",
             url: '/bets',
-            dataType: "json",
+            contentType: "application/json",
             data: dataString,
             cache: false
         }).done(function(results) {

@@ -48,6 +48,7 @@ class OcrAPI {
   val FirstTo15Alt = """.*(1ST TO 15 POINTS).+?([0-9]+).*""".r
   val GameId = ".*ROUND ([0-9]+) .*".r
   val GameIdAlt = ".* Payout: \\$[0-9]+\\.[0-9]+ ([0-9]+) .*".r
+  val GameIdAlt2 = ".* Payout: \\$[0-9]+\\.[0-9]+ [-][0-9]+ ([0-9]+) .*".r
 
   val Cost = """.*Ticket [C|c|P][しoa]st:? (\$[0-9]+[\.|,] ?[0-9]+).*""".r
   val ToPay = ".*to pay (\\$[0-9]+[\\.|,][0-9]+).*".r
@@ -148,6 +149,9 @@ class OcrAPI {
           id.toInt
         }
         case GameIdAlt(id) => {
+          id.toInt
+        }
+        case GameIdAlt2(id) => {
           id.toInt
         }
         case FirstHalf(name, id) => {

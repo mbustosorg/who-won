@@ -19,14 +19,12 @@
 
 package org.bustos.whowon
 
+
+
 import akka.actor.{ActorSystem, _}
 import akka.http.scaladsl.model.DateTime
 import akka.http.scaladsl.model.headers.HttpCookie
-import akka.http.scaladsl.server.Directive
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.MethodDirectives.{get, post}
-import akka.http.scaladsl.server.directives.PathDirectives.path
-import akka.http.scaladsl.server.directives.RouteDirectives.complete
+import akka.http.scaladsl.server.{Directive, Directives}
 import akka.pattern.ask
 import akka.util.{ByteString, Timeout}
 import org.bustos.whowon.WhoWonTables._
@@ -36,7 +34,7 @@ import spray.json._
 import scala.concurrent.duration._
 import scala.util.Properties.envOrElse
 
-trait WhoWonRoutes extends WhoWonJsonProtocol {
+trait WhoWonRoutes extends Directives with WhoWonJsonProtocol {
 
   val logger = LoggerFactory.getLogger(getClass)
   implicit def system: ActorSystem
