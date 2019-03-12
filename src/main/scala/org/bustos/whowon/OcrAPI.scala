@@ -28,8 +28,8 @@ import com.google.protobuf.ByteString
 import org.bustos.whowon.WhoWonTables.Bet
 import org.slf4j.LoggerFactory
 
-import scala.util.Properties.envOrElse
 import scala.collection.JavaConversions._
+import scala.util.Properties.envOrElse
 import scala.util.matching.Regex
 
 class OcrAPI {
@@ -40,9 +40,12 @@ class OcrAPI {
   val UndOvr = ".* (-?[0-9]+) (UND|OVR) ([0-9]+\\.?[0-9]+).*".r
   val MLBodds = ".* ([0-9]+)/([0-9]+) [H|M]L[B|E].*".r
   val MLBml = ".* ([+|-][0-9]+) [H|M]L[B|E].*".r
-  val SB = """.* PLB ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .*""".r
-  val SBalt = """.* ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .* PLB""".r
-  val SBalt2 = """.* ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? PLB .*""".r
+  val MLBmlAlt = ".* [H|M]L[B|E] .* ([+|-][0-9]+) .*".r
+  val SB = """.* [+-t]?[0-9]+? PLB (PICK) .*""".r
+  val SBalt = """.* PLB ([+-t]?[ ]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .*""".r
+  val SBalt2 = """.* ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .* PLB""".r
+  val SBalt3 = """.* PLB Event Date [0-9]+\/[0-9]+\/[0-9]+ ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? .*""".r
+  val SBalt4 = """.* ([+-t]?[0-9]+)[\.|,]?[ ]?([0-9]+)? PLB .*""".r
   val FirstHalf = """.*(1ST HALF COLLEGE BASKETBALL) ([0-9]+) .*""".r
   val FirstTo15 = """.*(1ST TO SCR 15 PTS) ([0-9]+) .*""".r
   val FirstTo15Alt = """.*(1ST TO 15 POINTS).+?([0-9]+).*""".r
@@ -53,6 +56,8 @@ class OcrAPI {
   val Cost = """.*Ticket [C|c|P][しoa]st:? (\$[0-9]+[\.|,] ?[0-9]+).*""".r
   val ToPay = ".*to pay (\\$[0-9]+[\\.|,][0-9]+).*".r
   val IdAndTeam = ".*ROUND ([0-9]+) .*? [-|\\+].*".r
+
+  val DateExp = """.* ([0-9]+)\/([0-9]+)\/([0-9]+) .*""".r
 
   val credentials = envOrElse("GOOGLE_APPLICATION_CREDENTIALS_FILE", "")
   if (!credentials.isEmpty) {
@@ -95,23 +100,13 @@ class OcrAPI {
       val response = client.batchAnnotateImages(requests)
       val responses = response.getResponsesList
       logger.info("Response")
+      client.shutdown
       if (responses.size == 1) {
         val res = responses(0)
         if (res.hasError) {
           throw new IllegalArgumentException
         }
-        val text = res.getFullTextAnnotation.getText.replace('\n', ' ')
-
-        val directory = new File(Paths.get(textPath).getParent.toString)
-        if (!directory.exists) {
-          directory.mkdir
-        }
-
-        val bw = new BufferedWriter(new FileWriter(textPath))
-
-        bw.write(text)
-        bw.close()
-        text
+        res.getFullTextAnnotation.getText.replace('\n', ' ')
       } else {
         throw new IllegalArgumentException
       }
@@ -132,6 +127,15 @@ class OcrAPI {
     } else {
       //val newImage = resize(filePath, smallName, 0.75)
       val originalText = imageOCR(filePath, textName.getPath)
+
+      val directory = new File(Paths.get(textName.getPath).getParent.toString)
+      if (!directory.exists) {
+        directory.mkdir
+      }
+      val bw = new BufferedWriter(new FileWriter(textName))
+      bw.write(originalText)
+      bw.close()
+
       //val resizedText = imageOCR(smallName, resizedTextName.getPath)
       //if (originalText != resizedText) {
       //  logger.error("Sized texts do not match")
@@ -145,30 +149,26 @@ class OcrAPI {
   def checkGameId(text: String, bet: Bet): Bet = {
     val id =
       text match {
-        case GameId(id) => {
-          id.toInt
-        }
-        case GameIdAlt(id) => {
-          id.toInt
-        }
-        case GameIdAlt2(id) => {
-          id.toInt
-        }
-        case FirstHalf(name, id) => {
-          id.toInt
-        }
-        case FirstTo15(name, id) => {
-          id.toInt
-        }
-        case FirstTo15Alt(name, id) => {
-          id.toInt
-        }
+        case GameId(id) => id.toInt
+        case GameIdAlt(id) => id.toInt
+        case GameIdAlt2(id) => id.toInt
+        case FirstHalf(name, id) => id.toInt
+        case FirstTo15(name, id) => id.toInt
+        case FirstTo15Alt(name, id) => id.toInt
         case default => {
           logger.error("No game id")
           0
         }
       }
-    Bet(bet.userName, id.toInt, 0, bet.spread_ml, bet.amount, bet.betType, bet.timestamp)
+    val year =
+      text match {
+        case DateExp(day, month, year) => year.toInt
+        case default => {
+          logger.error("No date found")
+          0
+        }
+      }
+    Bet(bet.userName, id, year, bet.spread_ml, bet.amount, bet.betType, bet.timestamp)
   }
 
   def checkCost(text: String, bet: Bet): Bet = {
@@ -197,7 +197,7 @@ class OcrAPI {
         text match {
           case MLBml(ml) =>
             logger.info("Moneyline")
-            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-1H", bet.timestamp)
+            Bet(bet.userName, id.toInt, bet.year, ml.toDouble, bet.amount, "ML-1H", bet.timestamp)
           case default => {
             logger.error("No moneyline found")
             bet
@@ -208,7 +208,7 @@ class OcrAPI {
         text match {
           case MLBml(ml) =>
             logger.info("Moneyline")
-            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
+            Bet(bet.userName, id.toInt, bet.year, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
           case default => {
             logger.error("No moneyline found")
             bet
@@ -219,7 +219,7 @@ class OcrAPI {
         text match {
           case MLBml(ml) =>
             logger.info("Moneyline")
-            Bet(bet.userName, id.toInt, 0, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
+            Bet(bet.userName, id.toInt, bet.year, ml.toDouble, bet.amount, "ML-15", bet.timestamp)
           case default => {
             logger.error("No moneyline found")
             bet
@@ -228,7 +228,7 @@ class OcrAPI {
       case UndOvr(ml, ovrUnd, points) =>
         logger.info("Overunder")
         val overUnderString = if (ovrUnd == "OVR") "OV" else "UN"
-        Bet(bet.userName, bet.bookId, 0, points.toDouble, bet.amount, "ML-" + overUnderString, bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, points.toDouble, bet.amount, "ML-" + overUnderString, bet.timestamp)
       case MLBodds(num, den) =>
         logger.info("Moneyline with odds")
         val ml =
@@ -237,37 +237,51 @@ class OcrAPI {
           } else {
             -1.0 * num.toDouble / den.toDouble * 100.0
           }
-        Bet(bet.userName, bet.bookId, 0, ml, bet.amount, "ML", bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, ml, bet.amount, "ML", bet.timestamp)
       case MLBml(ml) =>
         logger.info("Moneyline")
-        Bet(bet.userName, bet.bookId, 0, ml.toDouble, bet.amount, "ML", bet.timestamp)
-      case SB(spread, halfPoint) =>
+        Bet(bet.userName, bet.bookId, bet.year, ml.toDouble, bet.amount, "ML", bet.timestamp)
+      case MLBmlAlt(ml) =>
+        logger.info("Moneyline Alt")
+        Bet(bet.userName, bet.bookId, bet.year, ml.toDouble, bet.amount, "ML", bet.timestamp)
+      case SB(pick) =>
         logger.info("Straight Bet")
-        val totalSpread = {
-          val fixedSpread = spread.replaceAll("t", "")
-          if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
-          else fixedSpread.toFloat
-        }
-        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "ST", bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, 0.0, bet.amount, "ST", bet.timestamp)
       case SBalt(spread, halfPoint) =>
         logger.info("Straight Bet Alt")
         val totalSpread = {
-          val fixedSpread = spread.replaceAll("t", "")
+          val fixedSpread = spread.replaceAll("t", "").replaceAll(" ", "")
           if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
           else fixedSpread.toFloat
         }
-        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "ST", bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, totalSpread, bet.amount, "ST", bet.timestamp)
       case SBalt2(spread, halfPoint) =>
-        logger.info("Straight Bet Alt")
+        logger.info("Straight Bet Alt 2")
         val totalSpread = {
-          val fixedSpread = spread.replaceAll("t", "")
+          val fixedSpread = spread.replaceAll("t", "").replaceAll(" ", "")
           if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
           else fixedSpread.toFloat
         }
-        Bet(bet.userName, bet.bookId, 0, totalSpread, bet.amount, "ST", bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, totalSpread, bet.amount, "ST", bet.timestamp)
+      case SBalt3(spread, halfPoint) =>
+        logger.info("Straight Bet Alt 3")
+        val totalSpread = {
+          val fixedSpread = spread.replaceAll("t", "").replaceAll(" ", "")
+          if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
+          else fixedSpread.toFloat
+        }
+        Bet(bet.userName, bet.bookId, bet.year, totalSpread, bet.amount, "ST", bet.timestamp)
+      case SBalt4(spread, halfPoint) =>
+        logger.info("Straight Bet Alt 4")
+        val totalSpread = {
+          val fixedSpread = spread.replaceAll("t", "").replaceAll(" ", "")
+          if (halfPoint != null) (fixedSpread + "." + halfPoint).toFloat
+          else fixedSpread.toFloat
+        }
+        Bet(bet.userName, bet.bookId, bet.year, totalSpread, bet.amount, "ST", bet.timestamp)
       case default => {
         logger.error("NO MATCH")
-        Bet(bet.userName, bet.bookId, 0, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)
+        Bet(bet.userName, bet.bookId, bet.year, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)
       }
     }
   }

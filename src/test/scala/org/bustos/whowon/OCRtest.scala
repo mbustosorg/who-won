@@ -19,26 +19,29 @@
 
 package org.bustos.whowon
 
-import java.io.File
+import java.io.{BufferedReader, File, InputStreamReader}
 
 import com.github.tototoshi.csv.CSVReader
-import org.bustos.whowon.WhoWonData.logger
+import org.bustos.whowon.WhoWonData.s3
 import org.scalatest.{Matchers, WordSpec}
 
 class OCRtest extends WordSpec with Matchers {
 
-  val dataRoot = "/Users/mauricio/Google Drive/Projects/who-won/"
+  val bucket = "who-won-test-cases"
   val ocrApi = new OcrAPI
 
   "The OCR system " should {
-    val reader = CSVReader.open(new File(dataRoot + "tickets/ticketLabels.csv"))
-    reader.allWithHeaders.foreach(fields => {
-      logger.info(fields.toString)
-      fields("year") + " " + fields("filename") + " be able to read ticket image file " in {
+
+    val inputReader = new BufferedReader(new InputStreamReader(s3.getObject(bucket, "ticketLabels.csv").getObjectContent))
+    val reader = CSVReader.open(inputReader)
+    reader.allWithHeaders.filter(fields => fields("defaced") != "YES").foreach(fields => {
+      fields("year") + " " + fields("filename") + " be able to validate OCF " in {
         val spread = if (fields("spread").length == 0) fields("moneyline").toFloat else fields("spread").toFloat
         val betType = if (fields("overunder").length == 0) fields("betType") else fields("betType") + "-" + fields("overunder")
         val trainBet = WhoWonTables.Bet("mauricio", fields("id").toInt, 0, spread, fields("amount").replace("$", "").toFloat, betType, null)
-        val bet = ocrApi.detectedBet(dataRoot + "tickets/data/" + fields("year") + "/original/" + fields("filename"))
+        import com.amazonaws.services.s3.model.GetObjectRequest
+        s3.getObject(new GetObjectRequest(bucket, "data/" + fields("year") + "/original/" + fields("filename")), new File("/tmp/" + fields("year") + "_" + fields("filename")))
+        val bet = ocrApi.detectedBet("/tmp/" + fields("year") + "_" + fields("filename"))
         assert(bet.bookId == trainBet.bookId)
         assert(bet.amount == trainBet.amount)
         assert(bet.betType == trainBet.betType)

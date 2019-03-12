@@ -63,7 +63,7 @@ object WhoWonData {
     envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon").contains("_dev")
   }
 
-  val s3 = new AmazonS3Client;
+  val s3 = new AmazonS3Client
   val usWest2 = Region.getRegion(Regions.US_WEST_2)
   val S3bucket = "who-won-tickets"
 
