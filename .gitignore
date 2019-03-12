@@ -28,4 +28,5 @@ project/plugins/project/
 *#
 *~
 tickets/
+data_dev/
 deploy.sh

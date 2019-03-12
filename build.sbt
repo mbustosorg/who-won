@@ -1,7 +1,3 @@
-import com.typesafe.sbt.SbtNativePackager._
-
-packageArchetype.java_application
-
 lazy val commonSettings = Seq(
    organization := "org.bustos",
    version := "0.3.0",
@@ -37,5 +33,3 @@ val projectLibraries = Seq(
     "org.joda"                %  "joda-convert"         % "1.2",
     "com.github.tototoshi"    %% "scala-csv"            % "1.3.5"
 )
-
-Revolver.settings
