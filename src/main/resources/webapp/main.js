@@ -463,16 +463,16 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: imgData
             }).done(function(results) {
-                var result = '\n\nBook Id: ' + results[0].bookId + '\n' +
-                             'Amount: $' + results[0].amount + '\n' +
-                             'Bet Type: ' + nameForBetType(results[0].betType) + '\n';
-                if (results[0].betType == 'UNKNOWN' || results[0].bookId == 0 || results[0].spread_ml == 0 || results [0].amount == 0) {
+                var result = '\n\nBook Id: ' + results.bookId + '\n' +
+                             'Amount: $' + results.amount + '\n' +
+                             'Bet Type: ' + nameForBetType(results.betType) + '\n';
+                if (results.betType == 'UNKNOWN' || results.bookId == 0 || results.spread_ml == 0 || results .amount == 0) {
                     window.alert('Unable to decode image.  Retake image or enter manually.');
                 } else {
-                    if (results[0].betType == 'ST') result = result + 'Spread: ' + results[0].spread_ml;
-                    else result = result + 'Moneyline: ' + results[0].spread_ml;
+                    if (results.betType == 'ST') result = result + 'Spread: ' + results.spread_ml;
+                    else result = result + 'Moneyline: ' + results.spread_ml;
                     if (window.confirm('Submit? ' + result)) {
-                        sendBetToServer(results[0].bookId, results[0].spread_ml, results[0].amount, results[0].betType)
+                        sendBetToServer(results.bookId, results.spread_ml, results.amount, results.betType)
                     }
                 }
                 prepareForSnap();

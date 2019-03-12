@@ -21,7 +21,7 @@ val akka_version = "2.4.20"
 
 val projectLibraries = Seq(
     "com.google.cloud"        %  "google-cloud-vision"  % "1.64.0",
-    "com.amazonaws"           %  "aws-java-sdk"         % "1.9.6",
+    "com.amazonaws"           %  "aws-java-sdk"         % "1.9.18",
     "com.typesafe.akka"       %% "akka-http-core"       % akka_http_version,
     "com.typesafe.akka"       %% "akka-http"            % akka_http_version,
     "com.typesafe.akka"       %% "akka-http-spray-json" % akka_http_version,

@@ -349,7 +349,7 @@ class WhoWonData extends Actor with ActorLogging {
       val newImage = resize(filePath, smallName, 0.4)
       logger.info("Complete")
       val bet = ocrApi.detectedBet(smallName)
-      sender ! List(bet)
+      sender ! bet
       val key = name + "/ticket_" + dateString + ".png"
       s3.putObject(new PutObjectRequest(S3bucket, key, new File(smallName)))
     case BetProfilesRequest(year) =>
@@ -370,7 +370,8 @@ class WhoWonData extends Actor with ActorLogging {
       }
       sender ! BetProfiles(betCounts.map({ row => (row._2, row._3)}), highBets, lowBets)
     case YearsRequest =>
-      val query = sql"""select distinct year from bets order by year desc""".as[(Int)]
+
+      val query = sql"""select distinct year as year from brackets order by year desc""".as[Int]
       val years = db.withSession{ implicit session =>
         query.list
       }

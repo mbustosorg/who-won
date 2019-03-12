@@ -159,7 +159,7 @@ trait WhoWonRoutes extends Directives with WhoWonJsonProtocol {
               (x, y) => {
                 val future = whoWonData ? TicketImage(username.value, imageValue)
                 onSuccess(future) {
-                  case list: List[Bet] => complete { list }
+                  case decodedBet: Bet => complete { decodedBet }
                   case location: String => complete(location)
                   case _ => complete(400, ResponseTextHeader + "\"Error processing image\"}")
                 }

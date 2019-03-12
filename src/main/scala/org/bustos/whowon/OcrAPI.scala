@@ -23,12 +23,12 @@ import java.io.{BufferedWriter, File, FileInputStream, FileWriter}
 import java.nio.file.Paths
 
 import com.google.cloud.vision.v1.Feature.Type
-import com.google.cloud.vision.v1.{AnnotateImageRequest, Feature, Image, ImageAnnotatorClient}
+import com.google.cloud.vision.v1._
 import com.google.protobuf.ByteString
 import org.bustos.whowon.WhoWonTables.Bet
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.Properties.envOrElse
 import scala.util.matching.Regex
 
@@ -93,12 +93,14 @@ class OcrAPI {
     val imgBytes = ByteString.readFrom(new FileInputStream(filePath))
     val img = Image.newBuilder.setContent(imgBytes).build
     val feat = Feature.newBuilder.setType(Type.DOCUMENT_TEXT_DETECTION).build
-    val requests = List(AnnotateImageRequest.newBuilder.addFeatures(feat).setImage(img).build)
+    val requests = new java.util.ArrayList[AnnotateImageRequest]
+    val request = AnnotateImageRequest.newBuilder.addFeatures(feat).setImage(img).build
+    requests.add(request)
     try {
       val client = ImageAnnotatorClient.create
       logger.info("Sending...")
       val response = client.batchAnnotateImages(requests)
-      val responses = response.getResponsesList
+      val responses = response.getResponsesList.asScala
       logger.info("Response")
       client.shutdown
       if (responses.size == 1) {
