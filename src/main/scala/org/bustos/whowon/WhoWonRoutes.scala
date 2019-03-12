@@ -38,7 +38,7 @@ trait WhoWonRoutes extends Directives with WhoWonJsonProtocol {
 
   val logger = LoggerFactory.getLogger(getClass)
   implicit def system: ActorSystem
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Timeout(15 seconds)
 
   def whoWonData: ActorRef
 
