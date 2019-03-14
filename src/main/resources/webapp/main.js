@@ -466,7 +466,7 @@ $(document).ready(function() {
                 var result = '<p>Book Id: ' + results.bookId +
                              '</p><p>Amount: $' + results.amount +
                              '</p><p>Bet Type: ' + nameForBetType(results.betType) + '</p>';
-                if (results.year != parseInt(year())) {
+                if (results.year > 0 && results.year != parseInt(year())) {
                     $('#modal-scan-text').html('Ticket invalid for selected year.');
                     $('#confirm-modal').modal('show');
                     $('#confirm-scan-button').click(function() {
