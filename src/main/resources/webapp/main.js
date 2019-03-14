@@ -463,17 +463,30 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: imgData
             }).done(function(results) {
-                var result = '\n\nBook Id: ' + results.bookId + '\n' +
-                             'Amount: $' + results.amount + '\n' +
-                             'Bet Type: ' + nameForBetType(results.betType) + '\n';
-                if (results.betType == 'UNKNOWN' || results.bookId == 0 || results.spread_ml == 0 || results .amount == 0) {
-                    window.alert('Unable to decode image.  Retake image or enter manually.');
+                var result = '<p>Book Id: ' + results.bookId +
+                             '</p><p>Amount: $' + results.amount +
+                             '</p><p>Bet Type: ' + nameForBetType(results.betType) + '</p>';
+                if (results.year != parseInt(year())) {
+                    $('#modal-scan-text').html('Ticket invalid for selected year.');
+                    $('#confirm-modal').modal('show');
+                    $('#confirm-scan-button').click(function() {
+                        $('#confirm-modal').modal('hide');
+                    });
+                } else if (results.betType == 'UNKNOWN' || results.bookId == 0 || results.spread_ml == 0 || results .amount == 0) {
+                    $('#modal-scan-text').html('Unable to decode image.  Retake image or enter manually.');
+                    $('#confirm-modal').modal('show');
+                    $('#confirm-scan-button').click(function() {
+                        $('#confirm-modal').modal('hide');
+                    });
                 } else {
-                    if (results.betType == 'ST') result = result + 'Spread: ' + results.spread_ml;
-                    else result = result + 'Moneyline: ' + results.spread_ml;
-                    if (window.confirm('Submit? ' + result)) {
+                    if (results.betType == 'ST') result = result + '<p>Spread: ' + results.spread_ml + '</p>';
+                    else result = result + '<p>Moneyline: ' + results.spread_ml + '</p>';
+                    $('#modal-scan-text').html(result);
+                    $('#confirm-modal').modal('show');
+                    $('#confirm-scan-button').click(function() {
+                        $('#confirm-modal').modal('hide');
                         sendBetToServer(results.bookId, results.spread_ml, results.amount, results.betType)
-                    }
+                    });
                 }
                 prepareForSnap();
             });

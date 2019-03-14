@@ -41,7 +41,7 @@ class OCRtest extends WordSpec with Matchers {
         val trainBet = WhoWonTables.Bet("mauricio", fields("id").toInt, 0, spread, fields("amount").replace("$", "").toFloat, betType, null)
         import com.amazonaws.services.s3.model.GetObjectRequest
         s3.getObject(new GetObjectRequest(bucket, "data/" + fields("year") + "/original/" + fields("filename")), new File("/tmp/" + fields("year") + "_" + fields("filename")))
-        val bet = ocrApi.detectedBet("/tmp/" + fields("year") + "_" + fields("filename"))
+        val bet = ocrApi.detectedBet("/tmp/" + fields("year") + "_" + fields("filename"))._1
         assert(bet.bookId == trainBet.bookId)
         assert(bet.amount == trainBet.amount)
         assert(bet.betType == trainBet.betType)

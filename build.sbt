@@ -29,7 +29,7 @@ val projectLibraries = Seq(
     "org.slf4j"               %  "slf4j-api"            % slf4j_version,
     "org.slf4j"               %  "slf4j-simple"         % slf4j_version,
     "mysql"                   %  "mysql-connector-java" % "5.1.39",
-    "joda-time"               %  "joda-time"            % "2.7",
+    "joda-time"               %  "joda-time"            % "2.8.1",
     "org.joda"                %  "joda-convert"         % "1.2",
     "com.github.tototoshi"    %% "scala-csv"            % "1.3.5"
 )

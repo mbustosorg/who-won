@@ -120,16 +120,16 @@ class OcrAPI {
     }
   }
 
+  def ticketTextFile(filePath: String): File = {
+    new File(filePath.replaceAll(".jpg", ".txt").replaceAll(".png", ".txt").replaceAll("original", "original_text"))
+  }
+
   def ticketText(filePath: String): String = {
-    val smallName = filePath.replaceAll(".jpg", "_small.jpg").replaceAll(".png", "_small.png").replaceAll("original", "resized")
-    val textName = new File(filePath.replaceAll(".jpg", ".txt").replaceAll(".png", ".txt").replaceAll("original", "original_text"))
-    val resizedTextName = new File(filePath.replaceAll(".jpg", ".txt").replaceAll(".png", ".txt").replaceAll("original", "resized_text"))
+    val textName = ticketTextFile(filePath)
     if (textName.exists) {
       scala.io.Source.fromFile(textName).mkString
     } else {
-      //val newImage = resize(filePath, smallName, 0.75)
       val originalText = imageOCR(filePath, textName.getPath)
-
       val directory = new File(Paths.get(textName.getPath).getParent.toString)
       if (!directory.exists) {
         directory.mkdir
@@ -137,13 +137,6 @@ class OcrAPI {
       val bw = new BufferedWriter(new FileWriter(textName))
       bw.write(originalText)
       bw.close()
-
-      //val resizedText = imageOCR(smallName, resizedTextName.getPath)
-      //if (originalText != resizedText) {
-      //  logger.error("Sized texts do not match")
-      //  logger.error(originalText)
-      //  logger.error(resizedText)
-      //}
       originalText
     }
   }
@@ -185,15 +178,15 @@ class OcrAPI {
           0.0
         }
       }
-    Bet(bet.userName, bet.bookId, 0, bet.spread_ml, amount, bet.betType, bet.timestamp)
+    Bet(bet.userName, bet.bookId, bet.year, bet.spread_ml, amount, bet.betType, bet.timestamp)
   }
 
-  def detectedBet(filePath: String): Bet = {
+  def detectedBet(filePath: String): (Bet, String) = {
     val text = ticketText(filePath)
     logger.info(filePath)
     logger.info(text)
     val bet = checkCost(text, checkGameId(text, Bet("mauricio", 0, 0, 0.0, 0.0, "", null)))
-    text match {
+    val finalBet = text match {
       case FirstHalf(name, id) =>
         logger.info("1st Half")
         text match {
@@ -286,6 +279,7 @@ class OcrAPI {
         Bet(bet.userName, bet.bookId, bet.year, bet.spread_ml, bet.amount, "UNKNOWN", bet.timestamp)
       }
     }
+    (finalBet, text)
   }
 
 }
