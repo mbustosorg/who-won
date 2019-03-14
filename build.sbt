@@ -1,3 +1,6 @@
+
+enablePlugins(JavaAppPackaging)
+
 lazy val commonSettings = Seq(
    organization := "org.bustos",
    version := "0.3.0",
