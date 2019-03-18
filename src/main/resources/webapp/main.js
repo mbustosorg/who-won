@@ -44,6 +44,9 @@ $(document).ready(function() {
     var constraints = { audio: false, video: true };
     var webcamStream = null;
 
+    var queryingCompetitors = false;
+    var displayingCompetitors = false;
+
     function startVideo() {
         if (webcamStream == null) {
             function errBack(message) {
@@ -586,38 +589,47 @@ $(document).ready(function() {
     };
 
     function displayCompetitors(e) {
-        $('[id^=competitors]').remove();
-        $('[id^=button][id$=span]').removeClass('glyphicon-plus');
-        $('[id^=button][id$=span]').removeClass('glyphicon-minus');
-        $('[id^=button][id$=span]').addClass('glyphicon-plus');
-        var span = $('#' + e.currentTarget.id + ' span');
-        span.removeClass('glyphicon-plus');
-        span.addClass('glyphicon-minus');
-        var bet = e.currentTarget.id.replace('button', '');
-        $.ajax({
-            type: 'GET',
-            url: '/competition/' + year() + '/' + bet,
-            cache: false
-        }).done (function (bets) {
-            var newTable = '';
-            var userName = getCookie("WHOWON_USER");
-            $.each(bets, function(key, currentBet) {
-                if (userName != currentBet.bet.userName) {
-                    newTable = newTable +
-                        '<tr id="competitors_' + bet + '_' + i + '">' +
-                        '<td></td>' +
-                        '<td>' + currentBet.bet.userName + '</td>' +
-                        '<td>' + currentBet.bracket.teamName + '</td>' +
-                        '<td>' + currentBet.bet.betType + '</td>' +
-                        '<td>' + currentBet.bet.spread_ml + '</td>' +
-                        '<td>$' + currentBet.bet.amount + '</td>' +
-                        '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
-                        '</tr>';
-                }
-            });
+        if ($('#' + e.currentTarget.id + ' span').hasClass('glyphicon-minus')) {
             $('[id^=competitors]').remove();
-            $('#bets' + bet).after(newTable);
-        });
+            $('[id^=button][id$=span]').removeClass('glyphicon-plus');
+            $('[id^=button][id$=span]').removeClass('glyphicon-minus');
+            $('[id^=button][id$=span]').addClass('glyphicon-plus');
+        } else if (!queryingCompetitors) {
+            $('[id^=competitors]').remove();
+            $('[id^=button][id$=span]').removeClass('glyphicon-plus');
+            $('[id^=button][id$=span]').removeClass('glyphicon-minus');
+            $('[id^=button][id$=span]').addClass('glyphicon-plus');
+            var span = $('#' + e.currentTarget.id + ' span');
+            span.removeClass('glyphicon-plus');
+            span.addClass('glyphicon-minus');
+            var bet = e.currentTarget.id.replace('button', '');
+            queryingCompetitors = true;
+            $.ajax({
+                type: 'GET',
+                url: '/competition/' + year() + '/' + bet,
+                cache: false
+            }).done (function (bets) {
+                var newTable = '';
+                var userName = getCookie("WHOWON_USER");
+                $.each(bets, function(key, currentBet) {
+                    if (userName != currentBet.bet.userName) {
+                        newTable = newTable +
+                            '<tr id="competitors_' + bet + '_' + i + '">' +
+                            '<td></td>' +
+                            '<td>' + currentBet.bet.userName + '</td>' +
+                            '<td>' + currentBet.bracket.teamName + '</td>' +
+                            '<td>' + currentBet.bet.betType + '</td>' +
+                            '<td>' + currentBet.bet.spread_ml + '</td>' +
+                            '<td>$' + currentBet.bet.amount + '</td>' +
+                            '<td style="background-color:' + statusColor(currentBet, false) + '">' + currentBet.resultString + '</td>' +
+                            '</tr>';
+                    }
+                });
+                $('[id^=competitors]').remove();
+                $('#bets' + bet).after(newTable);
+                queryingCompetitors = false;
+            });
+        }
     };
 
     function displayCurrentBets() {
@@ -755,24 +767,26 @@ $(document).ready(function() {
             cache: false
         }).done(function(results) {
 			$('#years').empty();
-			$.each(results, function(key, year) {
-			    if (results[0] == year) {
+			$.each(results, function(key, year_) {
+			    if (results[0] == year_) {
+                    $('#who-won-title').text('Who Won? ' + year())
                     $('#years').append(
-                        '<li value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
+                        '<li value=\"' + year_ + '\" id=\"year_' + year_ + '\"><a href=\"#\">' + year_ + '</a></li>'
                     );
-                    $('#yearDropdownLabel').html(year + "<span class=\"caret\"></span>");
+                    $('#yearDropdownLabel').html(year_ + "<span class=\"caret\"></span>");
 			    } else {
                     $('#years').append(
-                        '<li value=\"' + year + '\" id=\"year_' + year + '\"><a href=\"#\">' + year + '</a></li>'
+                        '<li value=\"' + year_ + '\" id=\"year_' + year_ + '\"><a href=\"#\">' + year_ + '</a></li>'
                     );
                 }
-                $('#year_' + year).click(function(event) {
+                $('#year_' + year_).click(function(event) {
                     $('#navbar').removeClass('in');
                     $.each(this.parentNode.childNodes, function (index, node) {
                         $('#' + node.id).removeClass('active');
                     });
                     $('#' + this.id).addClass('active');
                     $('#yearDropdownLabel').html(this.textContent + "<span class=\"caret\"></span>");
+                    $('#who-won-title').text('Who Won? ' + year())
                     if (!$('#report').hasClass('hide')) {
                         updateWinnings();
                     } else {

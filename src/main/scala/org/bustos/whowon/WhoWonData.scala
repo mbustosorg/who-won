@@ -287,30 +287,39 @@ class WhoWonData extends Actor with ActorLogging {
       val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
       val betTimestamps = bets.map({ case (k, v) => v.map(_.timestamp)}).flatMap(x => x).toList.distinct.sorted
       val timestamps: List[DateTime] = (resultsTimestamps ++ betTimestamps).distinct.sorted
+
+      def accumulateOutlay(user: String, acc: (Double, Double, Int, Double, Double), bet: Bet, betType: String): (Double, Double, Int, Double, Double) = {
+        if (betsByUserMap(user).contains(betType) && betsByUserMap(user)(betType).timestamp.getMillis == bet.timestamp.getMillis)
+          (acc._1 - betsByUserMap(user)(betType).amount, acc._2, acc._3, acc._4, acc._5)
+        else acc
+      }
+
+      def bookTypeList(bet: Bet): List[String] = {
+        List(bet.bookId + "ML", bet.bookId + "ST", bet.bookId + "ST-OV", bet.bookId + "ST-UN", bet.bookId + "ML-15", bet.bookId + "ML-1H")
+      }
+
       val acc: Iterable[PlayerWinnings] = bets.map({ case (k, v) =>
         (k, timestamps.map({ timestamp =>
           val timeMillis = timestamp.getMillis
           val filteredBets = v.filter(_.timestamp.getMillis <= timeMillis)
-          filteredBets.foldLeft((0.0, 0.0, 0))({ (acc, x) =>
-            val mlBook = x.bookId + "ML"
-            val stBook = x.bookId + "ST"
-            val stOvBook = x.bookId + "ST-OV"
-            val stUnBook = x.bookId + "ST-UN"
-            val newAccML = if (betsByUserMap(k).contains(mlBook) && betsByUserMap(k)(mlBook).timestamp.getMillis == x.timestamp.getMillis) (acc._1 - betsByUserMap(k)(mlBook).amount, acc._2, acc._3) else acc
-            val newAccSTOV = if (betsByUserMap(k).contains(stOvBook) && betsByUserMap(k)(stOvBook).timestamp.getMillis == x.timestamp.getMillis) (newAccML._1 - betsByUserMap(k)(stOvBook).amount, newAccML._2, newAccML._3) else newAccML
-            val newAccSTUN = if (betsByUserMap(k).contains(stUnBook) && betsByUserMap(k)(stUnBook).timestamp.getMillis == x.timestamp.getMillis) (newAccSTOV._1 - betsByUserMap(k)(stUnBook).amount, newAccSTOV._2, newAccSTOV._3) else newAccSTOV
-            val newAccST = if (betsByUserMap(k).contains(stBook) && betsByUserMap(k)(stBook).timestamp.getMillis == x.timestamp.getMillis) (newAccSTUN._1 - betsByUserMap(k)(stBook).amount, newAccSTUN._2, newAccSTUN._3) else newAccSTUN
+          filteredBets.foldLeft((0.0, 0.0, 0, 0.0, 0.0))({ (acc, x) =>
+            val newAcc = bookTypeList(x).foldLeft(acc)({ (acc, betType) => accumulateOutlay(k, acc, x, betType) })
             if (gameResults.contains(x.bookId)) {
               val game = gameResults(x.bookId)
               if (game.resultTimeStamp.getMillis <= timeMillis) {
                 val payoff = betResult(x, Some(game)).payoff
                 val win = if (payoff > 0.0) 1 else 0
-                (newAccST._1 + payoff, newAccST._2 + win, newAccST._3 + 1)
-              } else newAccST
-            } else newAccST
+                (newAcc._1 + payoff, newAcc._2 + win, newAcc._3 + 1, newAcc._4 + x.amount, newAcc._5 + payoff) // Wallet, win count, bet count, investment, winnings
+              } else newAcc
+            } else newAcc
           })
         }))
-      }).map({ case (k, v) => PlayerWinnings(k, v.map({ x => x._1 }), v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}))})
+      }).map({ case (k, v) =>
+        PlayerWinnings(k,                                                            // Username
+          v.map({ x => x._1 }),                                                      // Wallet
+          v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}),           // Percentage
+          v.map({ x => if (x._3 > 0) x._5 / x._4 else 0.0}))}                        // ROI
+      )
       val tracking = WinningsTrack(timestamps.map({ ts =>
         val tsLocal = ts.minusHours(7)
         if (tsLocal.getDayOfYear > timestamps.head.getDayOfYear) tsLocal.minusHours(10)
