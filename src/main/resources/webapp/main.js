@@ -396,13 +396,13 @@ $(document).ready(function() {
                   var pctRow = [new Date(results.timestamps[i])];
                   for (j = 0; j < results.list.length; j++) {
                     row[j + 1] = Number(results.list[j].winnings[i].toFixed(2));
-                    pctRow[j + 1] = Number(((results.list[j].roi[i] - 1.0) * 100.0).toFixed(2));
+                    pctRow[j + 1] = Number((results.list[j].roi[i] * 100.0).toFixed(2));
                   }
                   data.addRow(row);
                   roiData.addRow(pctRow);
                 }
                 var options = {
-                  title: 'Net Winnings ($ vs time)',
+                  title: 'Wallet ($ vs time)',
                   legend: { position: 'bottom' },
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
@@ -420,7 +420,7 @@ $(document).ready(function() {
                     title: 'Time',
                     ticks: []
                   },
-                  vAxis: {viewWindow: {min: -25.0, max: 25.0}}
+                  vAxis: {viewWindow: {min: -100.0, max: 100.0}}
                 };
                 var chart = new google.visualization.LineChart(document.getElementById('percentageWinChart'));
                 chart.draw(roiData, options);
@@ -653,7 +653,7 @@ $(document).ready(function() {
 				);
 				$('#button' + currentBet.bet.bookId).on('click', function (e) { displayCompetitors(e) });
 			});
-			$('#betHeader').text('(Outlay: $' + currentOutlay +', Net Winnings: $' + (currentWinnings - currentOutlay).toFixed(2) + ')');
+			$('#betHeader').text('(Outlay: $' + currentOutlay +', Wallet: $' + (currentWinnings - currentOutlay).toFixed(2) + ')');
             $('#runningQuery').addClass('hide');
 		});
     };

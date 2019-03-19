@@ -1,3 +1,1 @@
-year,bookId,finalScore,firstHalfScore,opposingBookId,opposingFinalScore,opposingFirstHalfScore,resultTimeStamp,resultscol,firstTo15
-2019,717,61,0,718,87,0,"2018-03-16 01:49:21",NULL,true
-2019,718,87,0,717,61,0,"2018-03-16 01:49:21",NULL,true
+year,bookId,finalScore,firstHalfScore,opposingBookId,opposingFinalScore,opposingFirstHalfScore,resultTimeStamp,firstTo15

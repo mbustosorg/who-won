@@ -146,16 +146,8 @@ class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest wi
       }
     }
 
-    "get games" in {
-      Get("/games/" + testYear) ~>
-        routes ~> check {
-        val r = responseAs[String]
-        responseAs[String] should include ("undScore")
-      }
-    }
-
-    def submitBet(jsonRequest: ByteString): Unit = {
-      val postRequest = HttpRequest(HttpMethods.POST, uri = "/bets", entity = HttpEntity(MediaTypes.`application/json`, jsonRequest))
+    def postObject(uri: String, jsonRequest: ByteString): Unit = {
+      val postRequest = HttpRequest(HttpMethods.POST, uri = uri, entity = HttpEntity(MediaTypes.`application/json`, jsonRequest))
 
       postRequest ~>
         addHeader("Cookie", "WHOWON_SESSION=XXX") ~>
@@ -164,24 +156,58 @@ class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest wi
       }
     }
 
+    "post game result" in {
+      postObject("/games/2019",
+        ByteString("""{"year": 2019, "bookId": 717, "finalScore": 100, "firstHalfScore": 10, "opposingBookId": 718, "opposingFinalScore": 110, "opposingFirstHalfScore": 20, "firstTo15": true, "resultTimeStamp": "2019-03-16T01:00:00.000Z"}""".stripMargin))
+      postObject("/games/2019",
+        ByteString("""{"year": 2019, "bookId": 719, "finalScore": 100, "firstHalfScore": 10, "opposingBookId": 720, "opposingFinalScore": 110, "opposingFirstHalfScore": 20, "firstTo15": true, "resultTimeStamp": "2019-03-16T03:00:00.000Z"}""".stripMargin))
+      postObject("/games/2019",
+        ByteString("""{"year": 2019, "bookId": 721, "finalScore": 100, "firstHalfScore": 10, "opposingBookId": 722, "opposingFinalScore": 110, "opposingFirstHalfScore": 20, "firstTo15": true, "resultTimeStamp": "2019-03-16T04:00:00.000Z"}""".stripMargin))
+      postObject("/games/2019",
+        ByteString("""{"year": 2019, "bookId": 723, "finalScore": 100, "firstHalfScore": 10, "opposingBookId": 724, "opposingFinalScore": 110, "opposingFirstHalfScore": 20, "firstTo15": true, "resultTimeStamp": "2019-03-16T07:00:00.000Z"}""".stripMargin))
+    }
+
+    "get games" in {
+      Get("/games/" + testYear) ~>
+        routes ~> check {
+        val r = responseAs[String]
+        responseAs[String] should include ("undScore")
+      }
+    }
+
     "submit straight bet" in {
-      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-01-14T04:59:52.222Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-03-14T04:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 719, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-03-14T04:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 721, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-03-14T04:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 723, "year": """ + testYear + """, "spread_ml": 3.5, "amount": 1, "betType": "ST", "timestamp": "2019-03-14T04:00:00.000Z"}""".stripMargin))
     }
 
     "submit straight over/under bet" in {
-      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-01-14T05:37:00.352Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-03-14T06:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 719, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-03-14T06:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 721, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-03-14T06:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 723, "year": """ + testYear + """, "spread_ml": 50, "amount": 1, "betType": "ST-OV", "timestamp": "2019-03-14T06:00:00.000Z"}""".stripMargin))
     }
 
     "submit moneyline bet" in {
-      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 100, "amount": 1, "betType": "ML", "timestamp": "2019-01-14T05:29:21.552Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML", "timestamp": "2019-03-14T07:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 719, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML", "timestamp": "2019-03-14T07:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 721, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML", "timestamp": "2019-03-14T07:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 723, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML", "timestamp": "2019-03-14T07:00:00.000Z"}""".stripMargin))
     }
 
     "submit 1st half bet" in {
-      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 100, "amount": 1, "betType": "ML-1H", "timestamp": "2019-01-14T05:40:00.751Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML-1H", "timestamp": "2019-03-14T09:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 719, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML-1H", "timestamp": "2019-03-14T09:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 721, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML-1H", "timestamp": "2019-03-14T09:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 723, "year": """ + testYear + """, "spread_ml": 110, "amount": 1, "betType": "ML-1H", "timestamp": "2019-03-14T09:00:00.000Z"}""".stripMargin))
     }
 
-    "subtmit 1st to 15 bet" in {
-      submitBet(ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear  + """, "spread_ml": 100, "amount": 1, "betType": "ML-15", "timestamp": "2019-01-14T05:41:41.598Z"}""".stripMargin))
+    "submit 1st to 15 bet" in {
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 717, "year": """ + testYear  + """, "spread_ml": 110, "amount": 1, "betType": "ML-15", "timestamp": "2019-03-14T11:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 719, "year": """ + testYear  + """, "spread_ml": 110, "amount": 1, "betType": "ML-15", "timestamp": "2019-03-14T11:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 721, "year": """ + testYear  + """, "spread_ml": 110, "amount": 1, "betType": "ML-15", "timestamp": "2019-03-14T11:00:00.000Z"}""".stripMargin))
+      postObject("/bets", ByteString("""{"userName": "mauricio", "bookId": 723, "year": """ + testYear  + """, "spread_ml": 110, "amount": 1, "betType": "ML-15", "timestamp": "2019-03-14T11:00:00.000Z"}""".stripMargin))
     }
 
     "be able to logout a user" in {
