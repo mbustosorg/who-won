@@ -697,6 +697,10 @@ $(document).ready(function() {
 					'<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
 					'<td>' + timestamp + '</td>' +
 					'</tr>');
+				var first = currentGame.favBookId;
+				if (currentGame.undFirstTo15) {
+				    first = currentGame.undBookId;
+				}
 				$('#gamesLeft').append(
                     '<tr id="gameResult' + currentGame.undBookId + '">' +
 					'<td>' + currentGame.undBookId+ '</td>' +
@@ -704,7 +708,7 @@ $(document).ready(function() {
 					'<td>' + currentGame.undName + '</td>' +
 					'<td>' + currentGame.undFirstHalfScore + '</td>' +
 					'<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
-					'<td>' + (currentGame.favScore + currentGame.undScore) + '</tr>' +
+					'<td>' + (currentGame.favScore + currentGame.undScore) + ' - ' + first + '</tr>' +
 					'</tr><td/><td/><td/></tr>');
 				if (i < games.length - 1) {
                     currentGame = games[i + 1];
@@ -718,6 +722,10 @@ $(document).ready(function() {
                         '<td bgcolor="' + winnerColor(currentGame, true) + '">' + currentGame.favScore  + '</td>' +
                         '<td>' + timestamp + '</td>' +
                         '</tr>');
+                    var first = currentGame.favBookId;
+                    if (currentGame.undFirstTo15) {
+                        first = currentGame.undBookId;
+                    }
                     $('#gamesRight').append(
                         '<tr id="gameResult' + currentGame.undBookId + '">' +
                         '<td>' + currentGame.undBookId + '</td>' +
@@ -725,7 +733,7 @@ $(document).ready(function() {
                         '<td>' + currentGame.undName + '</td>' +
      					'<td>' + currentGame.undFirstHalfScore + '</td>' +
                         '<td bgcolor="' + winnerColor(currentGame, false) + '">' + currentGame.undScore  + '</td>' +
-    					'<td>' + (currentGame.favScore + currentGame.undScore) + '</tr>' +
+    					'<td>' + (currentGame.favScore + currentGame.undScore) + ' - ' + first + '</tr>' +
                         '</tr><td/><td/><td/></tr>');
                 }
             }

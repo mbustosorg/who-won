@@ -63,6 +63,7 @@ object WhoWonTables {
                                favName: String, undName: String,
                                favScore: Int, undScore: Int,
                                favFirstHalfScore: Int, undFirstHalfScore: Int,
+                               favFirstTo15: Boolean, undFirstTo15: Boolean,
                                timestamp: DateTime)
   case class GameResults(list: List[GameResultDisplay])
   case class PlayerIdRequest(userName: String)
@@ -129,7 +130,7 @@ trait WhoWonJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val betsRequest = jsonFormat2(BetsRequest)
   implicit val bets = jsonFormat1(Bets)
   implicit val gameResultsRequest = jsonFormat1(GameResultsRequest)
-  implicit val gameResultDisplay = jsonFormat11(GameResultDisplay)
+  implicit val gameResultDisplay = jsonFormat13(GameResultDisplay)
   implicit val gameResults = jsonFormat1(GameResults)
   implicit val bookIdsRequest = jsonFormat1(BookIdsRequest)
   implicit val bookIdsResults = jsonFormat1(BookIdsResults)

@@ -268,11 +268,11 @@ class WhoWonData extends Actor with ActorLogging {
           s <- resultsTable if c.bookId === s.bookId && s.bookId < s.opposingBookId && s.year === year
           d <- bracketsTable if s.opposingBookId === d.bookId && d.year === year
         } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName,
-          s.finalScore, s.opposingFinalScore, s.firstHalfScore, s.opposingFirstHalfScore, s.resultTimeStamp))
+          s.finalScore, s.opposingFinalScore, s.firstHalfScore, s.opposingFirstHalfScore, s.resultTimeStamp, s.firstTo15))
           .sortBy(_._9.desc)
           .list
         .map({ x =>
-          GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11.toDateTime(LocalTimeZone))
+          GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._12, !x._12, x._11.toDateTime(LocalTimeZone))
         })
       }
       sender ! GameResults(gameResults)
