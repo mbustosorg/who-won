@@ -71,7 +71,8 @@ object WhoWonData {
 
     db.withSession { implicit session =>
       bracketsTable.filter(_.year === year).delete
-      val reader = CSVReader.open(new File("data_dev/" + year + "_dev/brackets.csv"))
+      //val reader = CSVReader.open(new File("data_dev/" + year + "_dev/brackets.csv"))
+      val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
       reader.allWithHeaders.foreach(fields => {
         logger.info(fields.toString)
         val timestamp = {
@@ -81,10 +82,14 @@ object WhoWonData {
             case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
           }
         }
-        bracketsTable += WhoWonTables.Bracket(fields("bookId").toInt, fields("opposingBookId").toInt, fields("year").toInt,
-          fields("region"), fields("seed").toInt, fields("teamName"), timestamp,
-          fields("firstHalf").toInt, fields("secondHalf").toInt, fields("firstTo15").toInt,
-          fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
+        try {
+          bracketsTable += WhoWonTables.Bracket(fields("bookId").toInt, fields("opposingBookId").toInt, fields("year").toInt,
+            fields("region"), fields("seed").toInt, fields("teamName"), timestamp,
+            fields("firstHalf").toInt, fields("secondHalf").toInt, fields("firstTo15").toInt,
+            fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
+        } catch {
+          case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+        }
       })
     }
   }
@@ -114,9 +119,10 @@ object WhoWonData {
   def initializeData = {
 
     db.withSession { implicit session =>
-      betsTable.delete
+      //betsTable.delete
       playersTable.delete
-      val reader = CSVReader.open(new File("data_dev/whoWonPlayers.csv"))
+      //val reader = CSVReader.open(new File("data_dev/whoWonPlayers.csv"))
+      val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
       reader.foreach(fields => {
         logger.info(fields.toString)
         playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
@@ -269,7 +275,7 @@ class WhoWonData extends Actor with ActorLogging {
           d <- bracketsTable if s.opposingBookId === d.bookId && d.year === year
         } yield (c.bookId, d.bookId, c.seed, d.seed, c.teamName, d.teamName,
           s.finalScore, s.opposingFinalScore, s.firstHalfScore, s.opposingFirstHalfScore, s.resultTimeStamp, s.firstTo15))
-          .sortBy(_._9.desc)
+          .sortBy(_._1.desc)
           .list
         .map({ x =>
           GameResultDisplay(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._12, !x._12, x._11.toDateTime(LocalTimeZone))
