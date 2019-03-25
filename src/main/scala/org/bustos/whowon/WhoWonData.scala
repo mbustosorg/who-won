@@ -71,8 +71,8 @@ object WhoWonData {
 
     db.withSession { implicit session =>
       bracketsTable.filter(_.year === year).delete
-      //val reader = CSVReader.open(new File("data_dev/" + year + "_dev/brackets.csv"))
-      val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
+      val reader = CSVReader.open(new File("data_dev/" + year + "_dev/brackets.csv"))
+      //val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
       reader.allWithHeaders.foreach(fields => {
         logger.info(fields.toString)
         val timestamp = {
@@ -119,10 +119,10 @@ object WhoWonData {
   def initializeData = {
 
     db.withSession { implicit session =>
-      //betsTable.delete
+      betsTable.delete
       playersTable.delete
-      //val reader = CSVReader.open(new File("data_dev/whoWonPlayers.csv"))
-      val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
+      val reader = CSVReader.open(new File("data_dev/whoWonPlayers.csv"))
+      //val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
       reader.foreach(fields => {
         logger.info(fields.toString)
         playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
