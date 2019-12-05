@@ -396,7 +396,8 @@ $(document).ready(function() {
                   var pctRow = [new Date(results.timestamps[i])];
                   for (j = 0; j < results.list.length; j++) {
                     row[j + 1] = Number(results.list[j].winnings[i].toFixed(2));
-                    pctRow[j + 1] = Number((results.list[j].roi[i] * 100.0).toFixed(2));
+                    //pctRow[j + 1] = Number((results.list[j].roi[i] * 100.0).toFixed(2));
+                    pctRow[j + 1] = Number((results.list[j].winningsLive[i]).toFixed(2));
                   }
                   data.addRow(row);
                   roiData.addRow(pctRow);
@@ -413,14 +414,13 @@ $(document).ready(function() {
                 var chart = new google.visualization.LineChart(document.getElementById('winningsChart'));
                 chart.draw(data, options);
                 var options = {
-                  title: 'ROI (% vs time)',
+                  title: 'Timestamped Winnings ($ vs time)',
                   legend: { position: 'bottom' },
                   chartArea: { left: 60, top: 30, width: '85%', height: '80%'},
                   hAxis: {
                     title: 'Time',
                     ticks: []
                   },
-                  vAxis: {viewWindow: {min: -100.0, max: 100.0}}
                 };
                 var chart = new google.visualization.LineChart(document.getElementById('percentageWinChart'));
                 chart.draw(roiData, options);

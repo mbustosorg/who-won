@@ -294,9 +294,10 @@ class WhoWonData extends Actor with ActorLogging {
       val betTimestamps = bets.map({ case (k, v) => v.map(_.timestamp)}).flatMap(x => x).toList.distinct.sorted
       val timestamps: List[DateTime] = (resultsTimestamps ++ betTimestamps).distinct.sorted
 
-      def accumulateOutlay(user: String, acc: (Double, Double, Int, Double, Double), bet: Bet, betType: String): (Double, Double, Int, Double, Double) = {
+      def accumulateOutlay(user: String, acc: (Double, Int, Int, Double, Double, Double), bet: Bet, betType: String): (Double, Int, Int, Double, Double, Double) = {
+        // Wallet, win count, bet count, investment, winnings, live winnings
         if (betsByUserMap(user).contains(betType) && betsByUserMap(user)(betType).timestamp.getMillis == bet.timestamp.getMillis)
-          (acc._1 - betsByUserMap(user)(betType).amount, acc._2, acc._3, acc._4 - betsByUserMap(user)(betType).amount, acc._5)
+          (acc._1 - betsByUserMap(user)(betType).amount, acc._2, acc._3, acc._4 - betsByUserMap(user)(betType).amount, acc._5, acc._6)
         else acc
       }
 
@@ -308,14 +309,16 @@ class WhoWonData extends Actor with ActorLogging {
         (k, timestamps.map({ timestamp =>
           val timeMillis = timestamp.getMillis
           val filteredBets = v.filter(_.timestamp.getMillis <= timeMillis)
-          filteredBets.foldLeft((0.0, 0.0, 0, 0.0, 0.0))({ (acc, x) =>
+          filteredBets.foldLeft((0.0, 0, 0, 0.0, 0.0, 0.0))({ (acc, x) =>
             val newAcc = bookTypeList(x).foldLeft(acc)({ (acc, betType) => accumulateOutlay(k, acc, x, betType) })
             if (gameResults.contains(x.bookId)) {
               val game = gameResults(x.bookId)
               if (game.resultTimeStamp.getMillis <= timeMillis) {
-                val payoff = betResult(x, Some(game)).payoff
+                val currentResult = betResult(x, Some(game))
+                val payoff = currentResult.payoff
+                val amount = currentResult.bet.amount
                 val win = if (payoff > 0.0) 1 else 0
-                (newAcc._1 + payoff, newAcc._2 + win, newAcc._3 + 1, newAcc._4, newAcc._5 + payoff) // Wallet, win count, bet count, investment, winnings
+                (newAcc._1 + payoff, newAcc._2 + win, newAcc._3 + 1, newAcc._4, newAcc._5 + payoff, newAcc._6 - amount + payoff) // Wallet, win count, bet count, investment, winnings, live winnings
               } else newAcc
             } else newAcc
           })
@@ -324,7 +327,8 @@ class WhoWonData extends Actor with ActorLogging {
         PlayerWinnings(k,                                                            // Username
           v.map({ x => x._1 }),                                                      // Wallet
           v.map({ x => if (x._3 > 0) (x._2 / x._3 * 100.0).toInt else 0}),           // Percentage
-          v.map({ x => if (x._3 > 0) (x._5 + x._4) / x._4.abs else 0.0}))}                        // ROI
+          v.map({ x => if (x._3 > 0) (x._5 + x._4) / x._4.abs else 0.0}),            // ROI
+          v.map({ x => x._6 }))}                                                     // ROI Live
       )
       val tracking = WinningsTrack(timestamps.map({ ts =>
         val tsLocal = ts.minusHours(7)
