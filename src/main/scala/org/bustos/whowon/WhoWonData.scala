@@ -31,7 +31,7 @@ import org.bustos.whowon.ImageResize.resize
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
-import sun.misc.BASE64Decoder
+import java.util.Base64
 
 import scala.collection.immutable.Iterable
 import scala.concurrent.duration._
@@ -249,9 +249,10 @@ class WhoWonData extends Actor with ActorLogging {
       } else sender ! UnknownPlayer
     case result: GameResult =>
       db.withSession { implicit session =>
+        resultsTable.filter({ x => x.year === result.year &&  x.bookId === result.bookId && x.opposingBookId === result.opposingBookId }).delete
         resultsTable += result
         resultsTable += GameResult(result.year, result.opposingBookId, result.opposingFinalScore, result.opposingFirstHalfScore,
-          result.bookId, result.finalScore, result.firstHalfScore, result.firstTo15, result.resultTimeStamp)
+          result.bookId, result.finalScore, result.firstHalfScore, {if (result.firstTo15) false else true}, result.resultTimeStamp)
       }
       sender ! ResultSubmitted
     case MissingGameResultsRequest(year) =>
@@ -259,8 +260,9 @@ class WhoWonData extends Actor with ActorLogging {
         (for {
           (c, s) <- bracketsTable.filter(_.year === year) leftJoin resultsTable.filter(_.year === year) on (_.bookId === _.bookId)
         } yield (c.bookId, c.opposingBookId, c.year, c.region, c.seed, c.teamName, c.gameTime, s.bookId.?,
-          c.firstHalf, c.secondHalf, c.firstTo15, c.opposingFirstHalf, c.opposingSecondHalf, c.opposingFirstTo15))
-          .filter(_._8.isEmpty)
+          c.firstHalf, c.secondHalf, c.firstTo15, c.opposingFirstHalf, c.opposingSecondHalf, c.opposingFirstTo15, s.finalScore.?))
+          //.filter({ x => x._8.isEmpty || (!x._15.isEmpty && x._15.value === 0) })
+          .filter({ x => x._8.isEmpty })
           .sortBy(_._1)
           .list
           .map({ x => Bracket(x._1, x._2, x._3, x._4, x._5, x._6, x._7.toDateTime(LocalTimeZone),
@@ -360,7 +362,8 @@ class WhoWonData extends Actor with ActorLogging {
       val filePath = TicketImageDestination + name + "/ticket_" + dateString + ".png"
 
       val decodedFile = new File(filePath)
-      val decoded = new BASE64Decoder().decodeBuffer(decodedString)
+      val decoder = Base64.getDecoder
+      val decoded = decoder.decode(decodedString)
       val decodedStream = new FileOutputStream(decodedFile)
       decodedStream.write(decoded)
       decodedStream.close()
