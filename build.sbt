@@ -34,5 +34,6 @@ val projectLibraries = Seq(
     "mysql"                   %  "mysql-connector-java" % "5.1.39",
     "joda-time"               %  "joda-time"            % "2.8.1",
     "org.joda"                %  "joda-convert"         % "1.2",
-    "com.github.tototoshi"    %% "scala-csv"            % "1.3.5"
+    "com.github.tototoshi"    %% "scala-csv"            % "1.3.5",
+    "javax.xml.bind"          %  "jaxb-api"             % "2.3.0"
 )
