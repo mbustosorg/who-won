@@ -286,12 +286,20 @@ class WhoWonData extends Actor with ActorLogging {
       sender ! GameResults(gameResults)
     case WinningsTrackRequest(year) =>
       val gameResults = db.withSession { implicit session =>
-        resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => (x.bookId, x) }).toMap
+        if (year == 0) {
+          resultsTable.sortBy(_.resultTimeStamp).list.map({ x => ((x.bookId.toString + x.year.toString), x) }).toMap
+        } else {
+          resultsTable.filter(_.year === year).sortBy(_.resultTimeStamp).list.map({ x => ((x.bookId.toString + x.year.toString), x) }).toMap
+        }
       }
       val bets = db.withSession { implicit session =>
-        betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
+        if (year == 0) {
+          betsTable.sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
+        } else {
+          betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
+        }
       }
-      val betsByUserMap: Map[String, Map[String, Bet]] = bets.map({ case (k, v) => (k, v.map({ x => ((x.bookId + x.betType), x)}).toMap)})
+      val betsByUserMap: Map[String, Map[String, Bet]] = bets.map({ case (k, v) => (k, v.map({ x => ((x.bookId + x.betType + x.year), x)}).toMap)})
       val resultsTimestamps: List[DateTime] = gameResults.map({ case (k, v) => v.resultTimeStamp }).toList.distinct.sorted
       val betTimestamps = bets.map({ case (k, v) => v.map(_.timestamp)}).flatMap(x => x).toList.distinct.sorted
       val timestamps: List[DateTime] = (resultsTimestamps ++ betTimestamps).distinct.sorted
@@ -304,7 +312,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
 
       def bookTypeList(bet: Bet): List[String] = {
-        List(bet.bookId + "ML", bet.bookId + "ST", bet.bookId + "ST-OV", bet.bookId + "ST-UN", bet.bookId + "ML-15", bet.bookId + "ML-1H")
+        List(bet.bookId + "ML" + bet.year, bet.bookId + "ST" + bet.year, bet.bookId + "ST-OV" + bet.year, bet.bookId + "ST-UN" + bet.year, bet.bookId + "ML-15" + bet.year, bet.bookId + "ML-1H" + bet.year)
       }
 
       val acc: Iterable[PlayerWinnings] = bets.map({ case (k, v) =>
@@ -313,8 +321,9 @@ class WhoWonData extends Actor with ActorLogging {
           val filteredBets = v.filter(_.timestamp.getMillis <= timeMillis)
           filteredBets.foldLeft((0.0, 0, 0, 0.0, 0.0, 0.0))({ (acc, x) =>
             val newAcc = bookTypeList(x).foldLeft(acc)({ (acc, betType) => accumulateOutlay(k, acc, x, betType) })
-            if (gameResults.contains(x.bookId)) {
-              val game = gameResults(x.bookId)
+
+            if (gameResults.contains((x.bookId.toString + x.year.toString))) {
+              val game = gameResults((x.bookId.toString + x.year.toString))
               if (game.resultTimeStamp.getMillis <= timeMillis) {
                 val currentResult = betResult(x, Some(game))
                 val payoff = currentResult.payoff
@@ -332,10 +341,10 @@ class WhoWonData extends Actor with ActorLogging {
           v.map({ x => if (x._3 > 0) (x._5 + x._4) / x._4.abs else 0.0}),            // ROI
           v.map({ x => x._6 }))}                                                     // ROI Live
       )
+      var latestForDay = if (timestamps.isEmpty) null else timestamps.head
       val tracking = WinningsTrack(timestamps.map({ ts =>
-        val tsLocal = ts.minusHours(7)
-        if (tsLocal.getDayOfYear > timestamps.head.getDayOfYear) tsLocal.minusHours(10)
-        else tsLocal
+        latestForDay = latestForDay.plusMinutes(1)
+        latestForDay
       }), acc.toList)
       sender ! tracking
     case BookIdsRequest(year) =>
@@ -401,7 +410,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       //sender ! thisYear.getYear :: years
-      sender ! Years(List(2019, 2018, 2016))
+      sender ! Years(List("2020", "2019", "2018", "2016", "All"))
     case CompetitionRequest(year, bet) =>
       val bets = db.withSession { implicit session =>
         val opposingBookId = bracketsTable.filter(x => {

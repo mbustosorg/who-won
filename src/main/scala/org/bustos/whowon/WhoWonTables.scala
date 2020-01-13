@@ -52,7 +52,7 @@ object WhoWonTables {
                         firstTo15: Boolean, resultTimeStamp: DateTime)
   case object YearsRequest
   // Utility case classes
-  case class Years(years: List[Int])
+  case class Years(years: List[String])
   case class BetDisplay(bet: Bet, bracket: Bracket, payoff: Double, resultString: String)
   case class BetsRequest(playerId: String, year: Int)
   case class Bets(list: List[BetDisplay])
