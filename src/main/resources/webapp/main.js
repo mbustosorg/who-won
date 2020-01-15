@@ -774,7 +774,11 @@ $(document).ready(function() {
 			$('#years').empty();
 			$.each(results, function(key, year_) {
 			    if (results[0] == year_) {
-                    $('#who-won-title').text('Who Won? ' + year())
+    			    if (year == 0) {
+                        $('#who-won-title').text('Who Won? ' + year())
+                    } else {
+                        $('#who-won-title').text('Who Won? All')
+                    }
                     $('#years').append(
                         '<li value=\"' + year_ + '\" id=\"year_' + year_ + '\"><a href=\"#\">' + year_ + '</a></li>'
                     );
