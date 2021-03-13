@@ -41,8 +41,8 @@ class WhoWonServerTest extends WordSpec with Matchers with ScalatestRouteTest wi
       WhoWonData.devDb shouldEqual true
       if (WhoWonData.devDb) {
         initializeData
-        importResults(2021)
-        importBrackets(2021)
+        importResults(2019)
+        importBrackets(2019)
       } else {
         System.exit(1)
       }

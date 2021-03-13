@@ -60,7 +60,7 @@ object WhoWonData {
   }
 
   val devDb = {
-    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon?useSSL=false").contains("_dev")
+    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon_dev?useSSL=false").contains("_dev")
   }
 
   val s3 = new AmazonS3Client
