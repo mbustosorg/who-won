@@ -53,14 +53,14 @@ object WhoWonData {
   val filedateFormatter = DateTimeFormat.forPattern("yyyyMMdd_HHmmss")
 
   val db = {
-    val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon")
+    val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon?useSSL=false")
     val mysqlUser = envOrElse("WHOWON_MYSQL_USER", "root")
     val mysqlPassword = envOrElse("WHOWON_MYSQL_PASSWORD", "")
     Database.forURL(mysqlURL, driver = "com.mysql.jdbc.Driver", user = mysqlUser, password = mysqlPassword)
   }
 
   val devDb = {
-    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon").contains("_dev")
+    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon?useSSL=false").contains("_dev")
   }
 
   val s3 = new AmazonS3Client
@@ -410,7 +410,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       //sender ! thisYear.getYear :: years
-      sender ! Years(List("2020", "2019", "2018", "2016", "All"))
+      sender ! Years(List("2021", "2019", "2018", "2016", "All"))
     case CompetitionRequest(year, bet) =>
       val bets = db.withSession { implicit session =>
         val opposingBookId = bracketsTable.filter(x => {
