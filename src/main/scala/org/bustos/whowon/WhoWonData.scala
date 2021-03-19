@@ -312,7 +312,13 @@ class WhoWonData extends Actor with ActorLogging {
       }
 
       def bookTypeList(bet: Bet): List[String] = {
-        List(bet.bookId + "ML" + bet.year, bet.bookId + "ST" + bet.year, bet.bookId + "ST-OV" + bet.year, bet.bookId + "ST-UN" + bet.year, bet.bookId + "ML-15" + bet.year, bet.bookId + "ML-1H" + bet.year)
+        List(bet.bookId + "ML" + bet.year,
+          bet.bookId + "ST" + bet.year,
+          bet.bookId + "ST-OV" + bet.year,
+          bet.bookId + "ST-UN" + bet.year,
+          bet.bookId + "ST-1H" + bet.year,
+          bet.bookId + "ML-15" + bet.year,
+          bet.bookId + "ML-1H" + bet.year)
       }
 
       val acc: Iterable[PlayerWinnings] = bets.map({ case (k, v) =>

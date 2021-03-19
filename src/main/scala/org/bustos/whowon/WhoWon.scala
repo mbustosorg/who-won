@@ -35,6 +35,8 @@ object WhoWon extends App with WhoWonRoutes {
   implicit val materializer = ActorMaterializer()
 
   val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
+  //WhoWonData.importBrackets(2021)
+  //WhoWonData.initializeData
   lazy val serverRoutes: Route = routes
 
   val config = ConfigFactory.load

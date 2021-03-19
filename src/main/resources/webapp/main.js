@@ -445,6 +445,7 @@ $(document).ready(function() {
     function nameForBetType(betType) {
         if (betType == 'ML') return 'Moneyline';
         else if (betType == 'ST') return 'Straight Bet';
+        else if (betType == 'ST-1H') return 'Straight 1st';
         else if (betType == 'ML-OV') return 'Over';
         else if (betType == 'ML-OU') return 'Under';
         else if (betType == 'ML-15') return '1st to 15';
@@ -552,6 +553,8 @@ $(document).ready(function() {
                 betType = betType + '-OV';
             } else if ($('#opt-sb-under')[0].checked) {
                 betType = betType + '-UN';
+            } else if ($('#opt-sb-first-half')[0].checked) {
+                betType = betType + '-1H';
             }
             spreadMlAmount = $('#spreadAmount').val();
         }
