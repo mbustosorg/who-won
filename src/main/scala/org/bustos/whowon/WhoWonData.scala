@@ -182,7 +182,7 @@ class WhoWonData extends Actor with ActorLogging {
             result.finalScore - result.opposingFinalScore
           } else if (bet.betType == FirstTo15Moneyline) {
             if (result.firstTo15) 1 else -1
-          } else if (bet.betType == FirstHalfMoneyline) {
+          } else if (bet.betType == FirstHalfMoneyline || bet.betType == StraightFirstHalf) {
             result.firstHalfScore - result.opposingFirstHalfScore
           } else if (bet.betType == Over) {
             result.finalScore + result.opposingFinalScore - bet.spread_ml
@@ -196,7 +196,7 @@ class WhoWonData extends Actor with ActorLogging {
           else "Push"
         }
         val winnings = {
-          if (bet.betType == StraightBet || bet.betType == Over || bet.betType == Under) {
+          if (bet.betType == StraightBet || bet.betType == Over || bet.betType == Under || bet.betType == StraightFirstHalf) {
             if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
             else if (resultType == "Lose") 0.0
             else bet.amount
