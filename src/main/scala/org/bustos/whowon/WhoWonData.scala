@@ -20,6 +20,7 @@
 package org.bustos.whowon
 
 import java.io.{File, FileOutputStream}
+import java.util.Base64
 
 import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
@@ -31,7 +32,6 @@ import org.bustos.whowon.ImageResize.resize
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
-import java.util.Base64
 
 import scala.collection.immutable.Iterable
 import scala.concurrent.duration._
@@ -192,16 +192,16 @@ class WhoWonData extends Actor with ActorLogging {
         }
         val resultType = {
           if (score > 0) "Win"
-          else if (score < 0) "Lose"
+          else if (score < 0) "Not"
           else "Push"
         }
         val winnings = {
           if (bet.betType == StraightBet || bet.betType == Over || bet.betType == Under || bet.betType == StraightFirstHalf) {
             if (resultType == "Win") bet.amount + bet.amount * StraightBetPayoff
-            else if (resultType == "Lose") 0.0
+            else if (resultType == "Not") 0.0
             else bet.amount
           } else {
-            if (resultType == "Lose") 0.0
+            if (resultType == "Not") 0.0
             else {
               if (bet.spread_ml >= 100.0) {
                 bet.amount + bet.amount * (bet.spread_ml / 100.0)
@@ -296,7 +296,13 @@ class WhoWonData extends Actor with ActorLogging {
         if (year == 0) {
           betsTable.sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
         } else {
-          betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
+          def nearestMinute(time: DateTime): Int = {
+            if ((time.minuteOfHour().get() % 2) == 0) time.minuteOfHour().get()
+            else time.minuteOfHour().get() - 1
+          }
+          betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.
+            map({ x => WhoWonTables.Bet(x.userName, x.bookId, x.year, x.spread_ml,
+              x.amount, x.betType, x.timestamp.withSecondOfMinute(0).withMinuteOfHour(nearestMinute(x.timestamp)))}).groupBy(_.userName)
         }
       }
       val betsByUserMap: Map[String, Map[String, Bet]] = bets.map({ case (k, v) => (k, v.map({ x => ((x.bookId + x.betType + x.year), x)}).toMap)})

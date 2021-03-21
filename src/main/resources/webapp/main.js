@@ -583,7 +583,7 @@ $(document).ready(function() {
         var a = '1.0';
         if (!strong) a = '0.3';
         var bgcolor = 'rgba(255, 255, 255, 1.0)';
-        if (currentBet.resultString == 'Lose') bgcolor = 'rgba(255, 25, 0, ' + a + ')';
+        if (currentBet.resultString == 'Not') bgcolor = 'rgba(255, 119, 119, ' + a + ')';
         else if (currentBet.resultString == 'Win') bgcolor = 'rgba(109, 255, 109, ' + a + ')';
         return bgcolor;
     };
