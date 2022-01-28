@@ -71,15 +71,22 @@ object WhoWonData {
 
     db.withSession { implicit session =>
       bracketsTable.filter(_.year === year).delete
-      val reader = CSVReader.open(new File("data_dev/" + year + "_dev/brackets.csv"))
-      //val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
+      val reader = CSVReader.open(new File("data/" + year + "/brackets.csv"))
       reader.allWithHeaders.foreach(fields => {
         logger.info(fields.toString)
         val timestamp = {
           try {
             formatter.parseDateTime(fields("gameTime"))
           } catch {
-            case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+            case _: Exception => {
+              try {
+                ssFormatter.parseDateTime(fields("gameTime"))
+              } catch {
+                case _: Exception => {
+                  ccyyFormatter.parseDateTime(fields("gameTime"))
+                }
+              }
+            }
           }
         }
         try {
@@ -89,8 +96,31 @@ object WhoWonData {
             fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
         } catch {
           case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+        }      })
+    }
+  }
+
+  def importBets(year: Int) = {
+
+    db.withSession { implicit session =>
+      bracketsTable.filter(_.year === year).delete
+      val reader = CSVReader.open(new File("data/" + year + "/bets.csv"))
+      reader.allWithHeaders.foreach(fields => {
+        logger.info(fields.toString)
+        val timestamp = {
+          try {
+            formatter.parseDateTime(fields("timestamp"))
+          } catch {
+            case _: Exception => ssFormatter.parseDateTime(fields("timestamp"))
+          }
         }
-      })
+        try {
+          case class Bet(userName: String, bookId: Int, year: Int, spread_ml: Double, amount: Double, betType: String, timestamp: DateTime)
+          betsTable += WhoWonTables.Bet(fields("userName"), fields("bookId").toInt, fields("year").toInt,
+            fields("spread_ml").toDouble, fields("amount").toDouble, fields("betType"), timestamp)
+        } catch {
+          case _: Exception => ccyyFormatter.parseDateTime(fields("timestamp"))
+        }      })
     }
   }
 
@@ -98,20 +128,21 @@ object WhoWonData {
 
     db.withSession { implicit session =>
       resultsTable.filter(_.year === year).delete
-      val reader = CSVReader.open(new File("data_dev/" + year + "_dev/results.csv"))
+      val reader = CSVReader.open(new File("data/" + year + "/results.csv"))
       reader.allWithHeaders.filter { fields => !fields("year").isEmpty } foreach(fields => {
         logger.info(fields.toString)
         val timestamp = {
           try {
             formatter.parseDateTime(fields("resultTimeStamp"))
           } catch {
-            case _: Exception => ccyyFormatter.parseDateTime(fields("resultTimeStamp"))
+            case _: Exception => ssFormatter.parseDateTime(fields("resultTimeStamp"))
           }
         }
+        import java.lang.Boolean
         resultsTable += WhoWonTables.GameResult(fields("year").toInt,
           fields("bookId").toInt, fields("finalScore").toInt, fields("firstHalfScore").toInt,
           fields("opposingBookId").toInt, fields("opposingFinalScore").toInt, fields("opposingFirstHalfScore").toInt,
-          fields("firstTo15").toBoolean, timestamp)
+          Boolean.parseBoolean(fields("firstTo15")), timestamp)
       })
     }
   }
@@ -121,8 +152,7 @@ object WhoWonData {
     db.withSession { implicit session =>
       betsTable.delete
       playersTable.delete
-      val reader = CSVReader.open(new File("data_dev/whoWonPlayers.csv"))
-      //val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
+      val reader = CSVReader.open(new File("data/whoWonPlayers.csv"))
       reader.foreach(fields => {
         logger.info(fields.toString)
         playersTable += Player(fields(0).toInt, fields(1), fields(2), fields(3), fields(4))
@@ -421,7 +451,7 @@ class WhoWonData extends Actor with ActorLogging {
       }
       val thisYear = new DateTime
       //sender ! thisYear.getYear :: years
-      sender ! Years(List("2021", "2019", "2018", "2016", "All"))
+      sender ! Years(List("2022", "2021", "2019", "2018", "2016", "All"))
     case CompetitionRequest(year, bet) =>
       val bets = db.withSession { implicit session =>
         val opposingBookId = bracketsTable.filter(x => {

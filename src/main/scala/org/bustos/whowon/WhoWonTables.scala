@@ -93,6 +93,7 @@ object WhoWonTables {
 
   val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
   val ccyyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm")
+  val ssFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
   implicit def dateTime =
