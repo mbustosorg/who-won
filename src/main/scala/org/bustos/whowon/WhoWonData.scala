@@ -327,7 +327,8 @@ class WhoWonData extends Actor with ActorLogging {
           betsTable.sortBy({ x => (x.userName, x.timestamp) }).list.groupBy(_.userName)
         } else {
           def nearestMinute(time: DateTime): Int = {
-            time.minuteOfHour().get() - time.minuteOfHour().get() % 3
+            //time.minuteOfHour().get() - time.minuteOfHour().get() % 3
+            time.minuteOfHour().get()
           }
           betsTable.filter(_.year === year).sortBy({ x => (x.userName, x.timestamp) }).list.
             map({ x => WhoWonTables.Bet(x.userName, x.bookId, x.year, x.spread_ml,
