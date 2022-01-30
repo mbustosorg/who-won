@@ -396,13 +396,16 @@ $(document).ready(function() {
                 for (i = 0; i < results.timestamps.length; i++) {
                   var row = [new Date(results.timestamps[i])];
                   var pctRow = [new Date(results.timestamps[i])];
+                  var nonZero = false;
                   for (j = 0; j < results.list.length; j++) {
                     row[j + 1] = Number(results.list[j].winnings[i].toFixed(2));
                     //pctRow[j + 1] = Number((results.list[j].roi[i] * 100.0).toFixed(2));
+                    pctValue = Number((results.list[j].winningsLive[i]).toFixed(2));
+                    if (pctValue != 0.0) nonZero = true;
                     pctRow[j + 1] = Number((results.list[j].winningsLive[i]).toFixed(2));
                   }
                   data.addRow(row);
-                  roiData.addRow(pctRow);
+                  if (nonZero) roiData.addRow(pctRow);
                 }
                 var options = {
                   title: 'Wallet ($ vs time)',
