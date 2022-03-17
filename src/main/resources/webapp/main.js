@@ -850,7 +850,7 @@ $(document).ready(function() {
 		});
 		updateSpread(-40.0, 40.0);
     	$('#moneyline').empty();
-		for (i = -2000.0; i <= 2000.0; i = i + 10) {
+		for (i = -2000.0; i <= 2000.0; i = i + 5) {
 		    if (i <= -100.0 || i >= 100.0) {
      		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
                 if (i == 100.0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
