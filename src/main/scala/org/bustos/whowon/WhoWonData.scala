@@ -51,16 +51,17 @@ object WhoWonData {
   val LocalTimeZone = DateTimeZone.forID(WestCoastId)
   val hhmmssFormatter = DateTimeFormat.forPattern("hh:mm:ss a")
   val filedateFormatter = DateTimeFormat.forPattern("yyyyMMdd_HHmmss")
+  val xlsxFormatter = DateTimeFormat.forPattern("MM/dd/yy HH:mm")
 
   val db = {
-    val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon?useSSL=false")
+    val mysqlURL = envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon?useSSL=false&serverTimezone=America/Los_Angeles")
     val mysqlUser = envOrElse("WHOWON_MYSQL_USER", "root")
     val mysqlPassword = envOrElse("WHOWON_MYSQL_PASSWORD", "")
     Database.forURL(mysqlURL, driver = "com.mysql.jdbc.Driver", user = mysqlUser, password = mysqlPassword)
   }
 
   val devDb = {
-    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon_dev?useSSL=false").contains("_dev")
+    envOrElse("WHOWON_MYSQL_URL", "jdbc:mysql://localhost:3306/whowon_dev?useSSL=false&serverTimezone=America/Los_Angeles").contains("_dev")
   }
 
   val s3 = new AmazonS3Client
@@ -83,7 +84,13 @@ object WhoWonData {
                 ssFormatter.parseDateTime(fields("gameTime"))
               } catch {
                 case _: Exception => {
-                  ccyyFormatter.parseDateTime(fields("gameTime"))
+                  try {
+                    ccyyFormatter.parseDateTime(fields("gameTime"))
+                  } catch {
+                    case _: Exception => {
+                      xlsxFormatter.parseDateTime(fields("gameTime"))
+                    }
+                  }
                 }
               }
             }
@@ -95,7 +102,8 @@ object WhoWonData {
             fields("firstHalf").toInt, fields("secondHalf").toInt, fields("firstTo15").toInt,
             fields("opposingFirstHalf").toInt, fields("opposingSecondHalf").toInt, fields("opposingFirstTo15").toInt)
         } catch {
-          case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+          //case _: Exception => ccyyFormatter.parseDateTime(fields("gameTime"))
+          case _: Exception => xlsxFormatter.parseDateTime(fields("gameTime"))
         }      })
     }
   }
