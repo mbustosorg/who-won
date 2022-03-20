@@ -350,19 +350,9 @@ class WhoWonData extends Actor with ActorLogging {
 
       def accumulateOutlay(user: String, acc: (Double, Int, Int, Double, Double, Double), bet: Bet, betType: String): (Double, Int, Int, Double, Double, Double) = {
         // Wallet, win count, bet count, investment, winnings, live winnings
-        if (betsByUserMap(user).contains(betType) && betsByUserMap(user)(betType).timestamp.getMillis == bet.timestamp.getMillis)
+        if (betsByUserMap(user).contains(betType) && betsByUserMap(user)(betType).timestamp.getMillis <= bet.timestamp.getMillis)
           (acc._1 - betsByUserMap(user)(betType).amount, acc._2, acc._3, acc._4 - betsByUserMap(user)(betType).amount, acc._5, acc._6)
         else acc
-      }
-
-      def bookTypeList(bet: Bet): List[String] = {
-        List(bet.bookId + "ML" + bet.year,
-          bet.bookId + "ST" + bet.year,
-          bet.bookId + "ST-OV" + bet.year,
-          bet.bookId + "ST-UN" + bet.year,
-          bet.bookId + "ST-1H" + bet.year,
-          bet.bookId + "ML-15" + bet.year,
-          bet.bookId + "ML-1H" + bet.year)
       }
 
       val acc: Iterable[PlayerWinnings] = bets.map({ case (k, v) =>
@@ -370,7 +360,7 @@ class WhoWonData extends Actor with ActorLogging {
           val timeMillis = timestamp.getMillis
           val filteredBets = v.filter(_.timestamp.getMillis <= timeMillis)
           filteredBets.foldLeft((0.0, 0, 0, 0.0, 0.0, 0.0))({ (acc, x) =>
-            val newAcc = bookTypeList(x).foldLeft(acc)({ (acc, betType) => accumulateOutlay(k, acc, x, betType) })
+            val newAcc = List(x.bookId + x.betType + x.year).foldLeft(acc)({ (acc, betType) => accumulateOutlay(k, acc, x, betType) })
 
             if (gameResults.contains((x.bookId.toString + x.year.toString))) {
               val game = gameResults((x.bookId.toString + x.year.toString))
