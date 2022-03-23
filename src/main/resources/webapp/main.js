@@ -264,16 +264,16 @@ $(document).ready(function() {
     });
 
     $('#opt-sb-over').click(function() {
-        updateSpread(50.0, 300.0);
+        updateSpread(50.0, 300.0, 130.0);
         $('#spread-label').text('Total Points');
     });
     $('#opt-sb-under').click(function() {
-        updateSpread(50.0, 300.0);
+        updateSpread(50.0, 300.0, 130.0);
         $('#spread-label').text('Total Points');
     });
 
     $('#opt-sb-game').click(function() {
-        updateSpread(-40.0, 40.0);
+        updateSpread(-40.0, 40.0, 0.0);
         $('#spread-label').text('Spread');
     });
 
@@ -814,11 +814,11 @@ $(document).ready(function() {
 		});
     };
 
-    function updateSpread(lower, upper) {
+    function updateSpread(lower, upper, selected) {
     	$('#spreadAmount').empty();
 		for (i = lower; i < upper; i = i + 0.5) {
 		    var currentValue = '<option value =\"' + i + '\">' + i + '</option>';
-            if (i == 0) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
+            if (i == selected) currentValue = '<option value =\"' + i + '\" selected =\"selected\">' + i + '</option>'
 			$('#spreadAmount').append(currentValue);
 		}
 	}
@@ -848,7 +848,7 @@ $(document).ready(function() {
 			    }
  			});
 		});
-		updateSpread(-40.0, 40.0);
+		updateSpread(-40.0, 40.0, 0.0);
     	$('#moneyline').empty();
 		for (i = -2000.0; i <= 2000.0; i = i + 5) {
 		    if (i <= -100.0 || i >= 100.0) {
