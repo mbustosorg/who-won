@@ -37,7 +37,7 @@ object WhoWon extends App with WhoWonRoutes {
   val whoWonData = system.actorOf(Props[WhoWonData], "whoWonData")
   //WhoWonData.initializeData
   //List(2021, 2019, 2018, 2016).map({ year =>
-  List(2022).map({ year =>
+  List(2023).map({ year =>
     //WhoWonData.importBets(year)
     //WhoWonData.importBrackets(year)
     //WhoWonData.importResults(year)
