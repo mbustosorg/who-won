@@ -804,6 +804,8 @@ $(document).ready(function() {
                     $('#who-won-title').text('Who Won? ' + year())
                     if (!$('#report').hasClass('hide')) {
                         updateWinnings();
+                        displayCurrentBets();
+                        displayGameResults();
                     } else {
                         displayCurrentBets();
                         displayGameResults();
