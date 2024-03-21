@@ -836,18 +836,18 @@ $(document).ready(function() {
 				$('#bookId').append(
 					'<option value =\"' + labelString + '\">' + labelString + '</option>'
 				);
-			    if (currentGame.firstHalf != 0) {
-	     		    var labelString = currentGame.firstHalf + ' - ' + currentGame.teamName  + ' (1st Half)';
-                    $('#bookId').append(
-                        '<option value =\"' + labelString + '\">' + labelString + '</option>'
-                    );
-			    }
-			    if (currentGame.firstTo15 != 0) {
-	     		    var labelString = currentGame.firstTo15 + ' - ' + currentGame.teamName  + ' (1st to 15)';
-                    $('#bookId').append(
-                        '<option value =\"' + labelString + '\">' + labelString + '</option>'
-                    );
-			    }
+                //if (currentGame.firstHalf != 0) {
+	     		//    var labelString = currentGame.firstHalf + ' - ' + currentGame.teamName  + ' (1st Half)';
+                //    $('#bookId').append(
+                //        '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                //    );
+			    //}
+			    //if (currentGame.firstTo15 != 0) {
+	     		//    var labelString = currentGame.firstTo15 + ' - ' + currentGame.teamName  + ' (1st to 15)';
+                //    $('#bookId').append(
+                //        '<option value =\"' + labelString + '\">' + labelString + '</option>'
+                //    );
+			    //}
  			});
 		});
 		updateSpread(-40.0, 40.0, 0.0);
